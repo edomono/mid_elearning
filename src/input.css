@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================
+   Custom global styles
+   ============================= */
+
+/* Font smoothing untuk tampilan teks lebih halus */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Warna latar belakang default halaman */
+body {
+  @apply bg-gray-50 text-gray-800;
+}
+
+/* =============================
+   Custom reusable components
+   ============================= */
+
+/* Tombol utama */
+.btn-primary {
+  @apply px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg 
+         shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 
+         focus:ring-blue-400 focus:ring-offset-2 transition duration-200;
+}
+
+/* Tombol hijau (sukses) */
+.btn-success {
+  @apply px-5 py-2 bg-green-600 text-white font-semibold rounded-lg 
+         shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 
+         focus:ring-green-400 focus:ring-offset-2 transition duration-200;
+}
+
+/* Tombol merah (bahaya) */
+.btn-danger {
+  @apply px-5 py-2 bg-red-600 text-white font-semibold rounded-lg 
+         shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 
+         focus:ring-red-400 focus:ring-offset-2 transition duration-200;
+}
+
+/* =============================
+   Custom animations
+   ============================= */
+
+/* Efek getar */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out infinite;
+}
+
+/* Efek muncul perlahan */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.7s ease-in-out forwards;
+}
+
+/* Efek berdenyut */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 1.5s ease-in-out infinite;
+}
+
+/* Efek rotasi */
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
