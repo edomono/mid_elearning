@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Course Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#0074cc] min-h-screen flex flex-col">
+
+  <!-- ===== HEADER ===== -->
+  <header class="bg-white border-b-4 border-green-400 flex justify-between items-center px-6 py-3 rounded-b-lg shadow-md">
+    <div class="flex items-center space-x-3">
+      <img src="/images/logo.png" alt="Logo" class="h-10">
+      <div>
+        <h1 class="text-lg font-bold text-green-700">Intelsysdata</h1>
+        <p class="text-xs text-gray-500 -mt-1">Business Intelligence Solution</p>
+      </div>
+    </div>
+    <div class="text-right">
+      <p class="text-sm font-semibold text-blue-700">Admin</p>
+      <a href="/logout" class="text-xs text-gray-500 hover:underline">Logout</a>
+    </div>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="flex-1 flex justify-center items-start py-10 px-6">
+
+    <div class="bg-white w-3/4 p-6 rounded-2xl border-2 border-green-400 shadow-md">
+      <h2 class="text-blue-700 font-bold text-xl mb-4">Course Details</h2>
+
+      <form th:action="@{'/admin/course/' + ${subject.id} + '/update'}" method="post" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-600 mb-1">Course Code</label>
+          <input type="text" th:value="${subject.code}" name="code" readonly
+                 class="border border-gray-300 rounded w-full p-2 bg-gray-100">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-600 mb-1">Course Name</label>
+          <input type="text" th:value="${subject.name}" name="name"
+                 class="border border-gray-300 rounded w-full p-2" required>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-600 mb-1">Description</label>
+          <textarea name="description" th:text="${subject.description}"
+                    class="border border-gray-300 rounded w-full p-2 h-28"></textarea>
+        </div>
+
+        <div class="flex justify-between items-center mt-6">
+          <a href="/admin/dashboard"
+             class="text-blue-700 font-semibold hover:underline">← Back to Dashboard</a>
+
+          <button type="submit"
+                  class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="bg-white border-t-4 border-green-400 mt-auto py-6 px-8 flex justify-between rounded-t-lg shadow-inner">
+    <div>
+      <h2 class="font-bold text-gray-700 mb-2">PT Madani Intelsysdata Building</h2>
+      <p class="text-sm text-gray-500">
+        Jl. Tanah Abang IV No.53, RT.7/RW.4, Petojo Sel.,<br>
+        Kecamatan Gambir, Kota Jakarta Pusat, Daerah Khusus Ibukota Jakarta 10160.<br>
+        <span class="block mt-2">Helpdesk: helpdesk@intelsysdata.com | 021-3514957</span>
+      </p>
+    </div>
+    <div>
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.600571123497!2d106.81542827393084!3d-6.186747960617021!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f5d66a63e5a3%3A0x281f37ab3ee1982f!2sPT%20Madani%20Intelsysdata%20MID!5e0!3m2!1sid!2sid!4v1709048197341!5m2!1sid!2sid"
+        width="250" height="150" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+    </div>
+  </footer>
+
+</body>
+</html>

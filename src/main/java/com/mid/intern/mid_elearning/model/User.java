@@ -8,7 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "users") // boleh disesuaikan dengan nama tabel kamu
+@Table(name = "users")
 public class User {
 
     @Id
@@ -24,14 +24,17 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    // ======== Constructor ========
-    public User() {
-    }
+    @Column(nullable = false)
+    private String role = "USER"; // default role
 
-    public User(String username, String password, String email) {
+    // ======== Constructor ========
+    public User() {}
+
+    public User(String username, String password, String email, String role) {
         this.username = username;
         this.password = password;
         this.email = email;
+        this.role = role;
     }
 
     // ======== Getter & Setter ========
@@ -65,5 +68,13 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

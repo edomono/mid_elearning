@@ -52,13 +52,23 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String registerUser(@ModelAttribute User user, Model model) {
-        if (userService.registerUser(user)) {
-            model.addAttribute("success", "Registrasi berhasil! Silakan login.");
-            return "login";
-        } else {
-            model.addAttribute("error", "Username atau email sudah digunakan!");
-            return "register";
-        }
+    public String registerUser(
+        @ModelAttribute User user,
+        @RequestParam String confirmPassword,
+        Model model) {
+
+    if (!user.getPassword().equals(confirmPassword)) {
+        model.addAttribute("error", "Password dan konfirmasi password tidak sama!");
+        return "register";
     }
+
+    if (userService.registerUser(user)) {
+        model.addAttribute("success", "Registrasi berhasil! Silakan login.");
+        return "login";
+    } else {
+        model.addAttribute("error", "Username atau email sudah digunakan!");
+        return "register";
+    }
+}
+
 }
