@@ -8,16 +8,16 @@
 </head>
 
 <body class="relative min-h-screen"
-      style="background-image: url('/images/login-bg.png'); background-size: 100%; background-repeat: no-repeat; background-position: center;">
+      style="background-image: url('/images/login-bg.png'); background-size: cover; background-repeat: no-repeat; background-position: center;">
 
   <!-- Overlay gelap -->
-  <div class="absolute inset-0 bg-black/5"></div> 
+  <div class="absolute inset-0 bg-black/40"></div> 
 
-  <!-- Kontainer form -->
+  <!-- Kontainer utama -->
   <div class="relative flex items-center justify-center min-h-screen px-4">
-    <div class="w-full max-w-md bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-8 border-4" style=" border-color: #46AD38 ;">
+    <div class="w-full max-w-md bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border-4 border-[#46AD38]">
 
-      <!-- Gambar header -->
+      <!-- Header Logo -->
       <div class="flex justify-center mb-6">
         <img src="/images/header-logo.png" alt="Logo" class="h-16 object-contain">
       </div>
@@ -26,40 +26,33 @@
       <h1 class="text-2xl font-semibold text-center text-gray-800 mb-6">Login</h1>
 
       <!-- Notifikasi -->
-      <p th:if="${success}" 
-         class="text-green-600 text-center text-sm mb-3 font-medium"
-         th:text="${success}"></p>
+      <div th:if="${success}" class="mb-4 p-3 text-sm text-green-700 bg-green-100 border border-green-300 rounded-lg text-center" th:text="${success}"></div>
+      <div th:if="${error}" class="mb-4 p-3 text-sm text-red-700 bg-red-100 border border-red-300 rounded-lg text-center" th:text="${error}"></div>
+      <div th:if="${message}" class="mb-4 p-3 text-sm text-blue-700 bg-blue-100 border border-blue-300 rounded-lg text-center" th:text="${message}"></div>
 
-      <p th:if="${error}" 
-         class="text-red-600 text-center text-sm mb-3 font-medium"
-         th:text="${error}"></p>
-
-      <!-- Form -->
-      <form th:action="@{/login}" method="post" class="space-y-4">
+      <!-- Form Login -->
+      <form th:action="@{/process-login}" method="post" class="space-y-4">
+        
+        <!-- Username -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">Username</label>
-          <input type="text" name="username" required
-                 class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+          <input id="username" name="username" type="text" required
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46AD38] focus:outline-none text-gray-800">
         </div>
 
+        <!-- Password -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">Password</label>
-          <input type="password" name="password" required
-                 class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <input id="password" name="password" type="password" required
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46AD38] focus:outline-none text-gray-800">
         </div>
 
+        <!-- Tombol Submit -->
         <button type="submit"
-          class="w-full py-2 mt-2 bg-[#0578C8] text-white rounded-lg font-semibold hover:bg-[#1558B0] transition">
+                class="w-full bg-[#46AD38] hover:bg-[#3c9730] text-white font-semibold py-2 rounded-lg transition duration-200">
           Login
         </button>
-
       </form>
-
-      <!-- Link ke register -->
-      <p class="text-center text-sm text-gray-600 mt-4">
-        Belum punya akun?
-        <a href="/register" class="text-blue-600 hover:underline font-semibold">Daftar di sini</a>
-      </p>
     </div>
   </div>
 </body>

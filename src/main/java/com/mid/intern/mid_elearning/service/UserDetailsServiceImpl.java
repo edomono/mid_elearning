@@ -1,5 +1,8 @@
 package com.mid.intern.mid_elearning.service;
 
+import java.util.List;
+
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,12 +23,18 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User tidak ditemukan: " + username));
+
+        String role = user.getFormattedRole();
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
-                .roles(user.getRole()) // <-- ambil role dari database
+                .authorities(List.of(new SimpleGrantedAuthority(role)))
+                .disabled(!Boolean.TRUE.equals(user.getApproved())) // tidak aktif jika belum disetujui
+                .accountLocked(false)
+                .accountExpired(false)
+                .credentialsExpired(false)
                 .build();
     }
 }
