@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="'Assignment: ' + ${assignment.title}">Assignment Detail</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#0074cc] min-h-screen flex flex-col">
+  <header class="bg-white border-b-4 border-green-400 flex justify-between items-center px-6 py-3 rounded-b-lg shadow-md">
+    <div class="flex items-center space-x-3">
+      <img src="/images/logo.png" alt="Logo" class="h-10">
+      <div>
+        <h1 class="text-lg font-bold text-green-700">Intelsysdata</h1>
+        <p class="text-xs text-gray-500 -mt-1">Business Intelligence Solution</p>
+      </div>
+    </div>
+    <div class="text-right">
+      <p class="text-sm font-semibold text-blue-700">Admin</p>
+      <a href="/logout" class="text-xs text-gray-500 hover:underline">Logout</a>
+    </div>
+  </header>
+
+  <main class="flex-1 flex justify-center items-start py-10 px-6">
+    <div class="bg-white w-3/4 p-6 rounded-2xl border-2 border-green-400 shadow-md">
+      <h2 class="text-blue-700 font-bold text-xl mb-2" th:text="${assignment.title}"></h2>
+      <p class="text-gray-700 mb-6" th:text="${assignment.description}"></p>
+
+      <a href="#" th:href="@{'/' + ${assignment.filePath}}" target="_blank"
+         class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+        📄 View Assignment File
+      </a>
+
+      <hr class="my-6 border-gray-300">
+
+      <h3 class="text-lg font-bold text-blue-700 mb-4">Uploaded Submissions</h3>
+
+      <div class="space-y-4">
+        <div th:each="submission : ${submissions}"
+             class="border border-gray-300 rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition relative group">
+
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="font-semibold text-gray-800" th:text="${submission.user.username}"></p>
+              <p class="text-sm text-gray-500" th:text="${#dates.format(submission.uploadTime, 'dd MMM yyyy HH:mm')}"></p>
+              <a th:href="@{'/' + ${submission.filePath}}" target="_blank"
+                 class="text-blue-600 text-sm hover:underline">View File</a>
+            </div>
+            <div class="text-right">
+              <p class="text-sm text-gray-700" th:text="'Grade: ' + (${submission.grade} != null ? ${submission.grade} : 'N/A')"></p>
+              <p class="text-xs text-gray-500" th:text="'Comment: ' + (${submission.comment} != null ? ${submission.comment} : '-')"></p>
+            </div>
+          </div>
+
+          <!-- Hidden Grade Button -->
+          <div class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition">
+            <form th:action="@{'/admin/submission/' + ${submission.id} + '/grade'}" method="post" class="flex space-x-2">
+              <input type="text" name="grade" placeholder="Grade" class="border rounded px-2 py-1 text-sm w-20">
+              <input type="text" name="comment" placeholder="Comment" class="border rounded px-2 py-1 text-sm w-40">
+              <button type="submit"
+                      class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">
+                Grade
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <a th:href="@{'/admin/course/' + ${assignment.subject.id}}" class="text-blue-700 hover:underline">← Back to Course</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,180 @@
+package com.mid.intern.mid_elearning.service;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.mid.intern.mid_elearning.model.Assignment;
+import com.mid.intern.mid_elearning.model.Subject;
+import com.mid.intern.mid_elearning.model.Submission;
+import com.mid.intern.mid_elearning.repository.AssignmentRepository;
+import com.mid.intern.mid_elearning.repository.SubjectRepository;
+import com.mid.intern.mid_elearning.repository.SubmissionRepository;
+
+@Service
+public class AssignmentService {
+
+    private final AssignmentRepository assignmentRepository;
+    private final SubjectRepository subjectRepository;
+    private final SubmissionRepository submissionRepository;
+
+    // 📂 Lokasi upload di luar JAR agar aman saat runtime
+    private final Path rootUploadDir = Paths.get(System.getProperty("user.dir"), "uploads", "assignments");
+
+    public AssignmentService(
+            AssignmentRepository assignmentRepository,
+            SubjectRepository subjectRepository,
+            SubmissionRepository submissionRepository) {
+        this.assignmentRepository = assignmentRepository;
+        this.subjectRepository = subjectRepository;
+        this.submissionRepository = submissionRepository;
+    }
+
+    // =============================================================
+    // 📘 GET ASSIGNMENTS
+    // =============================================================
+    public List<Assignment> getAssignmentsBySubject(Subject subject) {
+        return assignmentRepository.findBySubject(subject);
+    }
+
+    public List<Assignment> getAssignmentsBySubjectId(Long subjectId) {
+        return subjectRepository.findById(subjectId)
+                .map(assignmentRepository::findBySubject)
+                .orElse(List.of());
+    }
+
+    public Optional<Assignment> getAssignmentById(Long id) {
+        return assignmentRepository.findById(id);
+    }
+
+    // =============================================================
+    // 📄 GET SUBMISSIONS BY ASSIGNMENT
+    // =============================================================
+    public List<Submission> getSubmissionsByAssignment(Assignment assignment) {
+        return submissionRepository.findByAssignment(assignment);
+    }
+
+    // =============================================================
+    // 💾 SAVE ASSIGNMENT (Mentor upload tugas)
+    // =============================================================
+    public void saveAssignment(Long subjectId, Assignment assignment, MultipartFile file) {
+        try {
+            Optional<Subject> subjectOpt = subjectRepository.findById(subjectId);
+            if (subjectOpt.isEmpty()) {
+                System.err.println("❌ Subject not found with ID: " + subjectId);
+                return;
+            }
+
+            Subject subject = subjectOpt.get();
+
+            // Buat folder upload jika belum ada
+            if (!Files.exists(rootUploadDir)) {
+                Files.createDirectories(rootUploadDir);
+                System.out.println("📁 Folder uploads dibuat di: " + rootUploadDir.toAbsolutePath());
+            }
+
+            // Simpan file jika ada
+            if (file != null && !file.isEmpty()) {
+                String cleanFileName = file.getOriginalFilename().replaceAll("\\s+", "_");
+                String fileName = System.currentTimeMillis() + "_" + cleanFileName;
+                Path filePath = rootUploadDir.resolve(fileName).normalize();
+
+                file.transferTo(filePath.toFile());
+
+                // Simpan path relatif agar bisa diakses via browser
+                assignment.setFileName(fileName);
+                assignment.setFilePath("uploads/assignments/" + fileName);
+            }
+
+            assignment.setSubject(subject);
+            assignmentRepository.save(assignment);
+
+            System.out.println("✅ Assignment berhasil disimpan: " + assignment.getTitle());
+
+        } catch (IOException e) {
+            System.err.println("❌ Gagal menyimpan file assignment: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // =============================================================
+    // 📝 UPDATE GRADE & COMMENT (Mentor memberi nilai)
+    // =============================================================
+    public void updateGradeAndComment(Long submissionId, String grade, String comment) {
+        submissionRepository.findById(submissionId).ifPresent(submission -> {
+            if (grade != null && !grade.isBlank()) submission.setGrade(grade.trim());
+            if (comment != null && !comment.isBlank()) submission.setComment(comment.trim());
+            submissionRepository.save(submission);
+            System.out.println("✏️ Submission " + submissionId + " dinilai dengan grade " + grade);
+        });
+    }
+
+    // =============================================================
+    // 🔍 GET SUBJECT ID BY ASSIGNMENT
+    // =============================================================
+    public Long getAssignmentSubjectId(Long assignmentId) {
+        return assignmentRepository.findById(assignmentId)
+                .map(a -> a.getSubject().getId())
+                .orElse(null);
+    }
+
+    // =============================================================
+    // ❌ DELETE ASSIGNMENT (hapus file & submissions)
+    // =============================================================
+    public void deleteAssignment(Long assignmentId) {
+        assignmentRepository.findById(assignmentId).ifPresent(a -> {
+            // Hapus file fisik jika ada
+            if (a.getFilePath() != null) {
+                try {
+                    // Pastikan filePath relatif diubah ke absolute path
+                    Path filePath = Paths.get(System.getProperty("user.dir"))
+                            .resolve(a.getFilePath())
+                            .normalize()
+                            .toAbsolutePath();
+
+                    Files.deleteIfExists(filePath);
+                    System.out.println("🗑️ File assignment dihapus: " + filePath);
+                } catch (IOException e) {
+                    System.err.println("⚠️ Gagal menghapus file: " + a.getFilePath());
+                }
+            }
+
+            // Hapus submissions terkait
+            List<Submission> submissions = submissionRepository.findByAssignment(a);
+            if (!submissions.isEmpty()) {
+                submissionRepository.deleteAll(submissions);
+                System.out.println("🗑️ Semua submission untuk assignment dihapus.");
+            }
+
+            // Hapus assignment
+            assignmentRepository.delete(a);
+            System.out.println("✅ Assignment berhasil dihapus: " + a.getTitle());
+        });
+    }
+
+    // =============================================================
+    // 🧱 ADD (optional direct creation)
+    // =============================================================
+    public Assignment addAssignment(Assignment assignment, MultipartFile file) throws IOException {
+        if (file != null && !file.isEmpty()) {
+            if (!Files.exists(rootUploadDir)) Files.createDirectories(rootUploadDir);
+
+            String cleanFileName = file.getOriginalFilename().replaceAll("\\s+", "_");
+            String fileName = System.currentTimeMillis() + "_" + cleanFileName;
+            Path filePath = rootUploadDir.resolve(fileName).normalize();
+
+            file.transferTo(filePath.toFile());
+
+            assignment.setFileName(fileName);
+            assignment.setFilePath("uploads/assignments/" + fileName);
+        }
+
+        return assignmentRepository.save(assignment);
+    }
+}

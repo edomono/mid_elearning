@@ -1,5 +1,6 @@
 package com.mid.intern.mid_elearning.controller;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
@@ -13,12 +14,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.mid.intern.mid_elearning.model.Announcement;
+import com.mid.intern.mid_elearning.model.Assignment;
 import com.mid.intern.mid_elearning.model.Subject;
+import com.mid.intern.mid_elearning.model.Submission;
 import com.mid.intern.mid_elearning.model.User;
 import com.mid.intern.mid_elearning.service.AnnouncementService;
+import com.mid.intern.mid_elearning.service.AssignmentService;
 import com.mid.intern.mid_elearning.service.SubjectService;
+import com.mid.intern.mid_elearning.service.SubmissionService;
 import com.mid.intern.mid_elearning.service.UserService;
 
 @Controller
@@ -28,13 +34,21 @@ public class AdminDashboardController {
     private final SubjectService subjectService;
     private final UserService userService;
     private final AnnouncementService announcementService;
+    private final AssignmentService assignmentService;
+    private final SubmissionService submissionService;
 
-    public AdminDashboardController(SubjectService subjectService,
-                                    UserService userService,
-                                    AnnouncementService announcementService) {
+    public AdminDashboardController(
+            SubjectService subjectService,
+            UserService userService,
+            AnnouncementService announcementService,
+            AssignmentService assignmentService,
+            SubmissionService submissionService) {
+
         this.subjectService = subjectService;
         this.userService = userService;
         this.announcementService = announcementService;
+        this.assignmentService = assignmentService;
+        this.submissionService = submissionService;
     }
 
     // =============================================================
@@ -43,8 +57,8 @@ public class AdminDashboardController {
     @GetMapping("/dashboard")
     public String showDashboard(Model model) {
         model.addAttribute("subjects", subjectService.getAllSubjects());
-        model.addAttribute("participants", userService.getAllUsers()); // sudah approved
-        model.addAttribute("waitingApprovals", userService.getPendingUsers()); // belum approved
+        model.addAttribute("participants", userService.getAllUsers());
+        model.addAttribute("waitingApprovals", userService.getPendingUsers());
         model.addAttribute("announcements", announcementService.getAllAnnouncementsSorted());
         return "admin/dashboard";
     }
@@ -52,7 +66,6 @@ public class AdminDashboardController {
     // =============================================================
     // 📢 ANNOUNCEMENTS
     // =============================================================
-
     @PostMapping("/announcement/add")
     public String addAnnouncement(@RequestParam("content") String content) {
         if (content != null && !content.trim().isEmpty()) {
@@ -91,17 +104,14 @@ public class AdminDashboardController {
     }
 
     // =============================================================
-    // 📘 COURSE MANAGEMENT
+    // 📘 COURSE MANAGEMENT (ADD ONLY)
     // =============================================================
-
-    // Accept both /add-course and /course/add for GET
     @GetMapping({"/add-course", "/course/add"})
     public String showAddCoursePage(Model model) {
         model.addAttribute("subject", new Subject());
         return "admin/add-course";
     }
 
-    // Accept both /add-course and /course/add for POST
     @PostMapping({"/add-course", "/course/add"})
     public String addCourse(@ModelAttribute("subject") Subject subject, Model model) {
         if (subject.getName() != null) subject.setName(subject.getName().trim());
@@ -122,60 +132,69 @@ public class AdminDashboardController {
         return "redirect:/admin/dashboard";
     }
 
-    @GetMapping("/course/{id}")
-    public String viewCourseDetails(@PathVariable("id") Long id, Model model) {
-        Optional<Subject> subjectOpt = subjectService.getSubjectById(id);
-        if (subjectOpt.isEmpty()) {
-            return "redirect:/admin/dashboard";
-        }
+    // =============================================================
+    // 🧩 ASSIGNMENT MANAGEMENT
+    // =============================================================
+    @PostMapping("/course/{id}/assignment/add")
+    public String addAssignment(
+            @PathVariable("id") Long subjectId,
+            @ModelAttribute("newAssignment") Assignment assignment,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
 
-        model.addAttribute("subject", subjectOpt.get());
-        return "admin/course-details";
+        assignmentService.saveAssignment(subjectId, assignment, file);
+        return "redirect:/admin/course/" + subjectId;
     }
 
-    @PostMapping("/course/{id}/update")
-    public String updateCourse(@PathVariable("id") Long id, @ModelAttribute("subject") Subject subject) {
-        Optional<Subject> existingOpt = subjectService.getSubjectById(id);
-        if (existingOpt.isPresent()) {
-            Subject existing = existingOpt.get();
-            existing.setName(subject.getName());
-            existing.setDescription(subject.getDescription());
-            subjectService.saveSubject(existing);
-        }
-        return "redirect:/admin/course/" + id;
+    @GetMapping("/assignment/{id}")
+    public String viewAssignmentDetails(@PathVariable("id") Long assignmentId, Model model) {
+        Optional<Assignment> assignmentOpt = assignmentService.getAssignmentById(assignmentId);
+        if (assignmentOpt.isEmpty()) return "redirect:/admin/dashboard";
+
+        Assignment assignment = assignmentOpt.get();
+        List<Submission> submissions = submissionService.getSubmissionsByAssignment(assignment);
+
+        model.addAttribute("assignment", assignment);
+        model.addAttribute("submissions", submissions);
+        return "admin/assignment-details";
     }
 
-    @PostMapping("/course/{id}/delete")
-    public String deleteCourse(@PathVariable("id") Long id) {
-        subjectService.deleteSubjectById(id);
-        return "redirect:/admin/dashboard";
+    @PostMapping("/assignment/{id}/delete")
+    public String deleteAssignment(@PathVariable("id") Long id) {
+        Long subjectId = assignmentService.getAssignmentSubjectId(id);
+        assignmentService.deleteAssignment(id);
+        return "redirect:/admin/course/" + subjectId;
+    }
+
+    // =============================================================
+    // 🧾 GRADE MANAGEMENT
+    // =============================================================
+    @PostMapping("/submission/{id}/grade")
+    public String gradeSubmission(
+            @PathVariable("id") Long submissionId,
+            @RequestParam("grade") String grade,
+            @RequestParam(value = "comment", required = false) String comment) {
+
+        submissionService.updateGradeAndComment(submissionId, grade, comment);
+        Long assignmentId = submissionService.getAssignmentIdBySubmission(submissionId);
+        return "redirect:/admin/assignment/" + assignmentId;
     }
 
     // =============================================================
     // 👥 PARTICIPANT MANAGEMENT
     // =============================================================
-
-    // Accept both /add-participant and /participant/add for GET
     @GetMapping({"/add-participant", "/participant/add"})
     public String showAddParticipantForm(Model model) {
         model.addAttribute("participant", new User());
         return "admin/add-participant";
     }
 
-    // Accept both /add-participant and /participant/add for POST
     @PostMapping({"/add-participant", "/participant/add"})
     public String addParticipant(@ModelAttribute("participant") User participant, Model model) {
-        if (participant.getUsername() != null) participant.setUsername(participant.getUsername().trim());
-        if (participant.getEmail() != null) participant.setEmail(participant.getEmail().trim());
+        boolean emailExists = userService.getUserByEmail(participant.getEmail()).isPresent();
+        boolean usernameExists = userService.getUserByUsername(participant.getUsername()).isPresent();
 
-        if (userService.getUserByEmail(participant.getEmail()).isPresent()) {
-            model.addAttribute("error", "Email already exists!");
-            model.addAttribute("participant", participant);
-            return "admin/add-participant";
-        }
-
-        if (userService.getUserByUsername(participant.getUsername()).isPresent()) {
-            model.addAttribute("error", "Username already exists!");
+        if (emailExists || usernameExists) {
+            model.addAttribute("error", "Email or username already exists!");
             model.addAttribute("participant", participant);
             return "admin/add-participant";
         }
@@ -183,22 +202,19 @@ public class AdminDashboardController {
         if (participant.getPassword() == null || participant.getPassword().isBlank()) {
             participant.setPassword("default123");
         }
-
         if (participant.getRole() == null || participant.getRole().isBlank()) {
             participant.setRole("USER");
         }
-
-        participant.setApproved(true); // Admin menambahkan langsung aktif
+        participant.setApproved(true);
         userService.saveUser(participant);
+
         return "redirect:/admin/dashboard";
     }
 
     @GetMapping("/participant/{id}")
     public String viewParticipantDetails(@PathVariable Long id, Model model) {
         Optional<User> participantOpt = userService.getUserById(id);
-        if (participantOpt.isEmpty()) {
-            return "redirect:/admin/dashboard";
-        }
+        if (participantOpt.isEmpty()) return "redirect:/admin/dashboard";
 
         model.addAttribute("participant", participantOpt.get());
         return "admin/participant-details";
@@ -223,9 +239,6 @@ public class AdminDashboardController {
         return "redirect:/admin/dashboard";
     }
 
-    // =============================================================
-    // ✅ APPROVAL MANAGEMENT (FITUR BARU)
-    // =============================================================
     @PostMapping("/participant/{id}/approve")
     public String approveParticipant(@PathVariable Long id) {
         userService.approveUser(id);

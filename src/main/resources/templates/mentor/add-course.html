@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Add New Course (Mentor)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-blue-600 min-h-screen flex flex-col justify-between">
+
+  <!-- Header (kosong dulu) -->
+  <header class="bg-white shadow-md py-4 px-8"></header>
+
+  <!-- Body -->
+  <main class="flex flex-col items-center justify-center flex-1 px-6">
+    <div class="bg-white border-4 border-green-400 rounded-2xl shadow-lg p-8 w-full max-w-2xl">
+      <h1 class="text-center text-2xl font-bold text-blue-600 mb-6">Add New Course</h1>
+
+      <!-- Error Message -->
+      <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+          <p th:text="${error}"></p>
+      </div>
+
+      <!-- FORM: Mentor Add Course -->
+      <form th:action="@{/mentor/course/add}" method="post" class="space-y-6">
+        
+        <!-- Course Name -->
+        <div>
+          <label class="block font-semibold text-gray-700 mb-2">Course Name</label>
+          <input type="text" name="name" required
+                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400">
+        </div>
+
+        <!-- Course Description -->
+        <div>
+          <label class="block font-semibold text-gray-700 mb-2">Description</label>
+          <textarea name="description" rows="4"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"></textarea>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-between mt-8">
+          <a href="/mentor/dashboard"
+             class="px-5 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold transition">
+             Cancel
+          </a>
+
+          <button type="submit"
+                  class="px-5 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-semibold transition">
+            Save Course
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- Footer (kosong dulu) -->
+  <footer class="bg-white shadow-inner py-6 px-8 mt-8"></footer>
+</body>
+</html>

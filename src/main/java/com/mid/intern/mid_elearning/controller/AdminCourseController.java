@@ -1,0 +1,62 @@
+package com.mid.intern.mid_elearning.controller;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.mid.intern.mid_elearning.model.Assignment;
+import com.mid.intern.mid_elearning.model.Subject;
+import com.mid.intern.mid_elearning.service.AssignmentService;
+import com.mid.intern.mid_elearning.service.SubjectService;
+
+@Controller
+@RequestMapping("/admin/course")
+public class AdminCourseController {
+
+    private final SubjectService subjectService;
+    private final AssignmentService assignmentService;
+
+    public AdminCourseController(SubjectService subjectService, AssignmentService assignmentService) {
+        this.subjectService = subjectService;
+        this.assignmentService = assignmentService;
+    }
+
+    @GetMapping("/{id}")
+    public String viewCourseDetails(@PathVariable("id") Long id, Model model) {
+        Optional<Subject> subjectOpt = subjectService.getSubjectById(id);
+        if (subjectOpt.isEmpty()) return "redirect:/admin/dashboard";
+
+        Subject subject = subjectOpt.get();
+        List<Assignment> assignments = assignmentService.getAssignmentsBySubjectId(id);
+
+        model.addAttribute("subject", subject);
+        model.addAttribute("assignments", assignments);
+        model.addAttribute("newAssignment", new Assignment());
+        return "admin/course-details";
+    }
+
+    @PostMapping("/{id}/update")
+    public String updateCourse(@PathVariable("id") Long id, @ModelAttribute("subject") Subject subject) {
+        Optional<Subject> existing = subjectService.getSubjectById(id);
+        if (existing.isPresent()) {
+            Subject s = existing.get();
+            s.setName(subject.getName());
+            s.setDescription(subject.getDescription());
+            subjectService.saveSubject(s);
+        }
+        return "redirect:/admin/course/" + id;
+    }
+
+    @PostMapping("/{id}/delete")
+    public String deleteCourse(@PathVariable("id") Long id) {
+        subjectService.deleteSubjectById(id);
+        return "redirect:/admin/dashboard";
+    }
+}

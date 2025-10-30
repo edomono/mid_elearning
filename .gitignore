@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Custom Uploads ###
+/src/main/resources/static/uploads/
