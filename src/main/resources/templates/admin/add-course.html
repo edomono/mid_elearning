@@ -2,25 +2,29 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <title>Add New Course</title>
+  <title>Add New Course (Admin)</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-blue-600 min-h-screen flex flex-col justify-between">
 
   <!-- Header (kosong dulu) -->
-  <header class="bg-white shadow-md py-4 px-8"></header>
+  <header class="bg-white shadow-md py-4 px-8">
+    <div th:insert="~{fragments/back-button :: backButton(defaultUrl='/admin/dashboard')}"></div>
+  </header>
 
   <!-- Body -->
   <main class="flex flex-col items-center justify-center flex-1 px-6">
     <div class="bg-white border-4 border-green-400 rounded-2xl shadow-lg p-8 w-full max-w-2xl">
       <h1 class="text-center text-2xl font-bold text-blue-600 mb-6">Add New Course</h1>
 
+      <!-- Error Message -->
       <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
           <p th:text="${error}"></p>
       </div>
 
-      <form th:action="@{/admin/course/add}" method="post" class="space-y-6">
+      <!-- FORM: Admin Add Course -->
+      <form th:action="@{'/admin/course/add'}" method="post" class="space-y-6">
         
         <!-- Course Name -->
         <div>

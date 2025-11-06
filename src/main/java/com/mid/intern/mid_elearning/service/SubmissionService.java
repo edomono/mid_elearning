@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,86 +20,89 @@ import com.mid.intern.mid_elearning.repository.SubmissionRepository;
 public class SubmissionService {
 
     private final SubmissionRepository submissionRepository;
-    private final String uploadDir = "uploads/submissions/";
 
     public SubmissionService(SubmissionRepository submissionRepository) {
         this.submissionRepository = submissionRepository;
     }
 
-    // =============================================================
-    // 📚 GET SUBMISSIONS
-    // =============================================================
+    // ✅ Find submission by assignment + student
+    public Optional<Submission> getSubmissionByAssignmentAndStudent(Assignment assignment, User student) {
+        return submissionRepository.findByAssignmentAndUser(assignment, student);
+    }
+
+    // ✅ Submit assignment (first time submit)
+    public Submission submitAssignment(User user, Assignment assignment, MultipartFile file, String note) {
+        try {
+            String folder = "uploads/submissions/" + user.getId();
+            Files.createDirectories(Paths.get(folder));
+
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path filePath = Paths.get(folder, fileName);
+            Files.write(filePath, file.getBytes());
+
+            Submission s = new Submission();
+            s.setUser(user);
+            s.setAssignment(assignment);
+            s.setFileName(fileName);
+            s.setFilePath(filePath.toString());
+            s.setUploadTime(LocalDateTime.now());
+            s.setComment(note);
+            s.setGrade(null);
+
+            return submissionRepository.save(s);
+        } catch (IOException e) {
+            throw new RuntimeException("File upload failed", e);
+        }
+    }
+
+    // ✅ Update assignment submission (resubmit)
+    public Submission updateSubmission(Long submissionId, User user, MultipartFile file, String note) {
+        try {
+            Submission submission = submissionRepository.findById(submissionId)
+                    .orElseThrow(() -> new RuntimeException("Submission not found"));
+
+            String folder = "uploads/submissions/" + user.getId();
+            Files.createDirectories(Paths.get(folder));
+
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path filePath = Paths.get(folder, fileName);
+            Files.write(filePath, file.getBytes());
+
+            submission.setFileName(fileName);
+            submission.setFilePath(filePath.toString());
+            submission.setUploadTime(LocalDateTime.now());
+            submission.setComment(note);
+
+            return submissionRepository.save(submission);
+        } catch (IOException e) {
+            throw new RuntimeException("File upload failed", e);
+        }
+    }
+
+    // ✅ Get all by assignment
     public List<Submission> getSubmissionsByAssignment(Assignment assignment) {
         return submissionRepository.findByAssignment(assignment);
     }
 
-    // 🔹 Tambahan baru: get submissions by user (untuk student/mentor dashboard)
-    public List<Submission> getSubmissionsByUser(User user) {
-        return submissionRepository.findByUser(user);
-    }
-
-    public Optional<Submission> getSubmissionById(Long id) {
-        return submissionRepository.findById(id);
-    }
-
-    // =============================================================
-    // 💾 SAVE SUBMISSION (UPLOAD)
-    // =============================================================
-    public Submission saveSubmission(Assignment assignment, User user, MultipartFile file) throws IOException {
-        Submission submission = new Submission();
-        submission.setAssignment(assignment);
-        submission.setUser(user);
-
-        if (file != null && !file.isEmpty()) {
-            Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
-
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path filePath = uploadPath.resolve(fileName);
-            file.transferTo(filePath.toFile());
-
-            submission.setFileName(fileName);
-            submission.setFilePath(filePath.toString());
-        }
-
-        return submissionRepository.save(submission);
-    }
-
-    // =============================================================
-    // 📝 UPDATE GRADE & COMMENT
-    // =============================================================
-    public void updateGradeAndComment(Long submissionId, String grade, String comment) {
-        submissionRepository.findById(submissionId).ifPresent(submission -> {
-            if (grade != null && !grade.isBlank()) submission.setGrade(grade);
-            if (comment != null && !comment.isBlank()) submission.setComment(comment);
-            submissionRepository.save(submission);
-        });
-    }
-
-    // =============================================================
-    // 🔍 GET ASSIGNMENT ID BY SUBMISSION
-    // =============================================================
+    // ✅ Get assignment ID from submission
     public Long getAssignmentIdBySubmission(Long submissionId) {
         return submissionRepository.findById(submissionId)
-                .map(sub -> sub.getAssignment().getId())
+                .map(s -> s.getAssignment().getId())
                 .orElse(null);
     }
 
-    // =============================================================
-    // ❌ DELETE SUBMISSION
-    // =============================================================
-    public void deleteSubmission(Long id) {
-        Optional<Submission> opt = submissionRepository.findById(id);
-        if (opt.isEmpty()) return;
+    // ✅ Update grade & comment (admin grading)
+    public void updateGradeAndComment(Long submissionId, String grade, String comment) {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new RuntimeException("Submission not found"));
 
-        Submission s = opt.get();
-        if (s.getFilePath() != null) {
-            try {
-                Files.deleteIfExists(Paths.get(s.getFilePath()));
-            } catch (IOException e) {
-                System.err.println("⚠️ Gagal menghapus file: " + e.getMessage());
-            }
-        }
-        submissionRepository.delete(s);
+        submission.setGrade(grade);
+        submission.setComment(comment);
+        submissionRepository.save(submission);
     }
+
+    public List<Submission> getSubmissionsByUser(User user) {
+        return submissionRepository.findByUser(user);
+}
+
 }

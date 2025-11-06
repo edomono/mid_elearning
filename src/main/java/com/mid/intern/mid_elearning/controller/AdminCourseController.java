@@ -15,6 +15,9 @@ import com.mid.intern.mid_elearning.model.Assignment;
 import com.mid.intern.mid_elearning.model.Subject;
 import com.mid.intern.mid_elearning.service.AssignmentService;
 import com.mid.intern.mid_elearning.service.SubjectService;
+import com.mid.intern.mid_elearning.service.UserService;
+import com.mid.intern.mid_elearning.service.AnnouncementService;
+import com.mid.intern.mid_elearning.service.ForumService;
 
 @Controller
 @RequestMapping("/admin/course")
@@ -22,10 +25,16 @@ public class AdminCourseController {
 
     private final SubjectService subjectService;
     private final AssignmentService assignmentService;
+    private final UserService userService;
+    private final AnnouncementService announcementService;
+    private final ForumService forumService;
 
-    public AdminCourseController(SubjectService subjectService, AssignmentService assignmentService) {
+    public AdminCourseController(SubjectService subjectService, AssignmentService assignmentService, UserService userService, AnnouncementService announcementService, ForumService forumService) {
         this.subjectService = subjectService;
         this.assignmentService = assignmentService;
+        this.userService = userService;
+        this.announcementService = announcementService;
+        this.forumService = forumService;
     }
 
     @GetMapping("/{id}")
@@ -39,6 +48,9 @@ public class AdminCourseController {
         model.addAttribute("subject", subject);
         model.addAttribute("assignments", assignments);
         model.addAttribute("newAssignment", new Assignment());
+        model.addAttribute("user", userService.getCurrentUser());
+        model.addAttribute("announcements", announcementService.getAllAnnouncementsSorted());
+        model.addAttribute("discussions", forumService.getAllDiscussions());
         return "admin/course-details";
     }
 

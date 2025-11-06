@@ -4,11 +4,15 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.mid.intern.mid_elearning.model.User;
 import com.mid.intern.mid_elearning.repository.UserRepository;
+import com.mid.intern.mid_elearning.dto.UserRegistrationDto;
+import com.mid.intern.mid_elearning.dto.ParticipantRegistrationDto;
 
 @Service
 public class UserService {
@@ -38,6 +42,15 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null; // No user logged in
+        }
+        String username = authentication.getName();
+        return getUserByUsername(username).orElse(null);
+    }
+
     // =============================================================
     // ✅ EXISTENCE CHECK
     // =============================================================
@@ -46,19 +59,6 @@ public class UserService {
             || userRepository.findByUsername(username).isPresent();
     }
 
-    // =============================================================
-    // 🧩 USER CREATION
-    // =============================================================
-    public boolean registerUser(User user) {
-        if (existsByEmailOrUsername(user.getEmail(), user.getUsername())) {
-            return false;
-        }
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setApproved(false);
-        userRepository.save(user);
-        return true;
-    }
 
     public void prepareAndSaveNewUser(User user) {
         // Trim input
@@ -86,9 +86,38 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public void registerNewUser(UserRegistrationDto registrationDto) {
+        if (existsByEmailOrUsername(registrationDto.getEmail(), registrationDto.getUsername())) {
+            throw new IllegalStateException("Email atau Username sudah terdaftar!");
+        }
+
+        User user = new User();
+        user.setUsername(registrationDto.getUsername());
+        user.setEmail(registrationDto.getEmail());
+        user.setPassword(passwordEncoder.encode(registrationDto.getPassword()));
+        user.setRole(registrationDto.getRole() != null && !registrationDto.getRole().isBlank() ? registrationDto.getRole() : "USER");
+        user.setApproved(false); // New users need admin approval
+
+        userRepository.save(user);
+    }
+
+    public void registerParticipant(ParticipantRegistrationDto participantDto) {
+        if (existsByEmailOrUsername(participantDto.getEmail(), participantDto.getUsername())) {
+            throw new IllegalStateException("Email atau Username sudah terdaftar!");
+        }
+
+        User user = new User();
+        user.setUsername(participantDto.getUsername());
+        user.setEmail(participantDto.getEmail());
+        user.setPassword(passwordEncoder.encode(participantDto.getPassword()));
+        user.setRole(participantDto.getRole() != null && !participantDto.getRole().isBlank() ? participantDto.getRole() : "USER");
+        user.setApproved(true); // Admin added participants are approved by default
+
+        userRepository.save(user);
+    }
+
     // =============================================================
     // ✏️ USER UPDATE
-    // =============================================================
     public void updateUser(Long id, User updatedUser) {
         userRepository.findById(id).ifPresent(existing -> {
             existing.setUsername(updatedUser.getUsername());
@@ -151,5 +180,15 @@ public class UserService {
 
     public void rejectUser(Long id) {
         userRepository.findById(id).ifPresent(userRepository::delete);
+    }
+
+    // =============================================================
+    // 🔑 PASSWORD MANAGEMENT
+    // =============================================================
+    public void updateUserPassword(User user, String newPassword) {
+        if (user != null && newPassword != null && !newPassword.isBlank()) {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+        }
     }
 }

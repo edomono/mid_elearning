@@ -1,13 +1,17 @@
 package com.mid.intern.mid_elearning.controller;
 
+import org.springframework.http.ResponseEntity;
 import java.io.IOException;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.mid.intern.mid_elearning.model.Assignment;
@@ -17,6 +21,7 @@ import com.mid.intern.mid_elearning.service.AssignmentService;
 
 @Controller
 @RequestMapping("/admin/course/{subjectId}/assignments")
+@PreAuthorize("hasRole('ADMIN')")
 public class AssignmentController {
 
     private final AssignmentService assignmentService;
@@ -35,5 +40,13 @@ public class AssignmentController {
         assignment.setSubject(subject);
         assignmentService.addAssignment(assignment, file);
         return "redirect:/admin/course/" + subjectId;
+    }
+
+    @GetMapping("/{assignmentId}")
+    @ResponseBody
+    public ResponseEntity<Assignment> getAssignmentDetails(@PathVariable Long assignmentId) {
+        return assignmentService.getAssignmentById(assignmentId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

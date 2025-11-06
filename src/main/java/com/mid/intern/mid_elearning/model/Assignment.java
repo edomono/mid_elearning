@@ -28,8 +28,7 @@ public class Assignment {
     private String grade;
     private String comment;
 
-    // 🕒 Tambahan baru untuk menghindari error di template
-    private LocalDateTime deadline;
+    private LocalDateTime dueDate;
 
     @ManyToOne
     @JoinColumn(name = "subject_id")
@@ -63,8 +62,8 @@ public class Assignment {
     public String getComment() { return comment; }
     public void setComment(String comment) { this.comment = comment; }
 
-    public LocalDateTime getDeadline() { return deadline; }
-    public void setDeadline(LocalDateTime deadline) { this.deadline = deadline; }
+    public LocalDateTime getDueDate() { return dueDate; }
+    public void setDueDate(LocalDateTime dueDate) { this.dueDate = dueDate; }
 
     public Subject getSubject() { return subject; }
     public void setSubject(Subject subject) { this.subject = subject; }

@@ -1,0 +1,41 @@
+<!-- Add Participant Modal -->
+<div id="admin-add-participant-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col border-4 border-blue-400">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center p-4 border-b bg-blue-50 rounded-t-xl">
+            <h2 class="text-2xl font-bold text-blue-700">Add Participant</h2>
+            <button id="admin-close-add-participant-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 overflow-y-auto">
+            <form id="add-participant-form" th:action="@{/admin/participant/add}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="mb-4">
+                    <label for="participant-name" class="block text-gray-700 text-sm font-bold mb-2">Username:</label>
+                    <input type="text" id="participant-name" name="username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-4">
+                    <label for="participant-email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                    <input type="email" id="participant-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-4">
+                    <label for="participant-password" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
+                    <input type="password" id="participant-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-6">
+                    <label for="participant-role" class="block text-gray-700 text-sm font-bold mb-2">Role:</label>
+                    <select id="participant-role" name="role" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                        <option value="">Select Role</option>
+                        <option value="STUDENT">Student</option>
+                        <option value="MENTOR">Mentor</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Add Participant</button>
+                    <button type="button" id="admin-cancel-add-participant-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

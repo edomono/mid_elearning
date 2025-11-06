@@ -7,23 +7,52 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    /* Animasi hover kartu */
+    /* Animations and transitions */
+    @keyframes slideDown {
+      from { transform: translateY(-10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-slide-down {
+      animation: slideDown 0.5s ease-out;
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
     .course-card {
       position: relative;
-      transition: transform 0.2s ease, background-color 0.2s ease;
+      transition: all 0.3s ease-out;
     }
     .course-card:hover {
-      background-color: #f0f8ff;
-      transform: translateY(-2px);
+      background-color: #e6f0ff;
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
-
+    /* Forum & announcement animations */
+    .forum-message {
+      transition: all 0.2s ease;
+    }
+    .forum-message:hover {
+      transform: translateX(4px);
+      background-color: #f8fafc;
+    }
+    .announcement {
+      transition: all 0.2s ease;
+    }
+    .announcement:hover {
+      background-color: #f0f9ff;
+      transform: translateX(2px);
+    }
     /* Tombol delete hanya muncul saat hover */
     .delete-btn {
       display: none;
       position: absolute;
       top: 8px;
       right: 8px;
-      background-color: #e3342f;
+      background-color: #46AD38;
       color: white;
       border-radius: 6px;
       font-size: 12px;
@@ -41,6 +70,7 @@
   <!-- ===== HEADER ===== -->
   <header class="bg-white border-b-4 border-green-400 flex justify-between items-center px-6 py-3 rounded-b-lg shadow-md">
     <div class="flex items-center space-x-3">
+      <div th:insert="~{fragments/back-button :: backButton(defaultUrl='/admin/dashboard')}"></div>
       <img src="/images/logo.png" alt="Logo" class="h-10">
       <div>
         <h1 class="text-lg font-bold text-green-700">Intelsysdata</h1>
@@ -49,134 +79,174 @@
     </div>
 
     <div class="text-right">
-      <p class="text-sm font-semibold text-blue-700">Admin</p>
+      <p class="font-medium text-blue-700">
+        <a href="/user/profile-details" class="hover:underline" th:text="${user.username}">Admin</a>
+      </p>
+      <p class="text-xs text-gray-500 mb-1" th:text="${user.email}">admin@example.com</p>
       <a href="/logout" class="text-xs text-gray-500 hover:underline">Logout</a>
     </div>
   </header>
 
   <!-- ===== MAIN CONTENT ===== -->
   <main class="flex-1 flex justify-center items-start py-10 px-6">
+    <div class="w-full max-w-7xl flex flex-col md:flex-row gap-6">
 
-    <!-- Kontainer utama -->
-    <div class="bg-white w-3/4 p-6 rounded-2xl border-2 border-green-400 shadow-md">
-
-      <!-- Tabs -->
-      <div class="flex items-center space-x-6 border-b pb-3 mb-6">
-        <button id="tab-subject"
-                class="pb-2 border-b-2 border-blue-600 text-blue-700 font-semibold transition">
-          Subject
-        </button>
-        <button id="tab-participant"
-                class="pb-2 text-gray-500 hover:text-blue-600 transition">
-          Participants
-        </button>
-      </div>
-
-      <!-- ===== SUBJECT TAB ===== -->
-      <div id="content-subject" class="tab-content">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div th:each="subject : ${subjects}" class="course-card border-2 border-blue-500 rounded-xl text-center p-4 relative">
-            <!-- Tombol delete -->
-            <form th:action="@{'/admin/course/' + ${subject.id} + '/delete'}" method="post" class="delete-form">
-              <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-              <button type="submit" class="delete-btn" onclick="return confirm('Delete this course?')">Delete</button>
-            </form>
-
-            <!-- Nama course -->
-            <a th:href="@{'/admin/course/' + ${subject.id}}"
-               class="block text-blue-800 font-semibold text-lg hover:underline mt-2">
-              <span th:text="${subject.name}">Course Name</span>
+      <!-- Left Container (Subject/Participant) -->
+      <div class="bg-white w-full md:w-4/4 p-6 rounded-2xl border-2 border-green-400 shadow-md relative">
+        <!-- Tabs -->
+        <div class="flex items-center justify-between border-b pb-3">
+          <div class="flex items-center space-x-6">
+            <button id="tab-subject" class="pb-2 border-b-2 border-blue-600 text-blue-700 font-semibold transition">
+              Subject
+            </button>
+            <button id="tab-participant" class="pb-2 text-gray-500 hover:text-blue-600 transition">
+              Participants
+            </button>
+          </div>
+          <div id="add-buttons-container" class="flex items-center space-x-2">
+            <a id="add-course-btn" href="/admin/course/add" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+              </svg>
+              <span>Add Course</span>
             </a>
-
-            <!-- Code -->
-            <p class="text-xs text-gray-500 mt-1" th:text="${subject.code}">C001</p>
+            <button type="button" id="add-participant-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2 hidden">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+              </svg>
+              <span>Add Participant</span>
+            </a>
           </div>
         </div>
 
-        <!-- Add Course -->
-        <div class="mt-6 text-right">
-          <a href="/admin/course/add"
-             class="text-green-600 font-semibold hover:underline">
-            + Add Course
-          </a>
-        </div>
-      </div>
+        <div th:replace="~{fragments/admin-add-participant-modal :: #admin-add-participant-modal}"></div>
+        <div th:insert="~{fragments/admin-participant-details-modal :: participant-details-modal}"></div>
 
-      <!-- ===== PARTICIPANT TAB ===== -->
-      <div id="content-participant" class="hidden tab-content">
-        <div class="overflow-x-auto">
-          <table class="min-w-full border border-gray-300 rounded-lg text-sm">
-            <thead class="bg-blue-100 text-blue-700 font-semibold">
+        <!-- ===== SUBJECT TAB ===== -->
+        <div id="content-subject" class="tab-content mt-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div th:each="subject, stat : ${subjects}"
+                 th:style="'animation-delay: ' + ${stat.index * 0.1} + 's'"
+                 class="course-card animate-slide-down border-2 border-blue-500 rounded-xl text-center p-4 relative">
+              <!-- Tombol delete -->
+              <form th:action="@{'/admin/course/' + ${subject.id} + '/delete'}" method="post" class="delete-form">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="delete-btn" onclick="return confirm('Delete this course?')">Delete</button>
+              </form>
+
+              <!-- Nama course -->
+              <a th:href="@{'/admin/course/' + ${subject.id}}"
+                 class="block text-blue-800 font-semibold text-lg hover:underline mt-2">
+                <span th:text="${subject.name}">Course Name</span>
+              </a>
+
+              <!-- Code -->
+              <p class="text-xs text-gray-500 mt-1" th:text="${subject.code}">C001</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== PARTICIPANT TAB ===== -->
+        <div id="content-participant" class="hidden tab-content mt-6">
+          <div class="overflow-x-auto">
+            <table class="min-w-full border border-gray-300 rounded-lg text-sm">
+              <thead class="bg-blue-100 text-blue-700 font-semibold">
               <tr>
                 <th class="px-4 py-2 text-left border">Name</th>
                 <th class="px-4 py-2 text-left border">Email</th>
-                <th class="px-4 py-2 text-left border">Role</th>
               </tr>
-            </thead>
-            <tbody>
-              <tr th:each="user : ${participants}" class="hover:bg-gray-50 transition">
-                <td class="px-4 py-2 border">
-                  <a th:href="@{'/admin/participant/' + ${user.id}}"
-                     class="text-blue-600 hover:underline font-medium">
-                    <span th:text="${user.username}">John Doe</span>
-                  </a>
-                </td>
-                <td class="px-4 py-2 border" th:text="${user.email}">john@example.com</td>
-                <td class="px-4 py-2 border" th:text="${user.role}">USER</td>
+              </thead>
+              <tbody>
+              <tr th:each="student : ${participants}" class="border-t hover:bg-gray-50">
+                <td class="py-2 px-4 border text-blue-600 font-medium"><a href="#" class="view-participant-btn" th:data-participant-id="${student.id}" th:text="${student.username}">John Doe</a></td>
+                <td class="px-4 py-2 border" th:text="${student.email}">john@example.com</td>
               </tr>
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div class="mt-6 text-right">
-          <a href="/admin/participant/add"
-             class="text-green-600 font-semibold hover:underline">
-            + Add Participant
-          </a>
+
+      </div>
+
+      <!-- Right Container (Announcement/Forum) -->
+      <div class="bg-white w-full md:w-1/3 p-6 rounded-2xl border-2 border-green-400 shadow-md">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-blue-700 font-semibold flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M12 20h.01M12 4h.01" />
+            </svg>
+            <span>Announcement</span>
+          </h2>
+          <button id="addAnnouncementBtn"
+                  class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded-lg">
+            + Add
+          </button>
+        </div>
+
+        <!-- Add Announcement Form (initially hidden) -->
+        <div id="addAnnouncementForm" class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 hidden animate-fade-in">
+          <form th:action="@{'/admin/announcement/add'}" method="post">
+            <textarea name="content" rows="3" class="w-full p-2 border rounded-md focus:ring-blue-400 focus:border-blue-400 text-sm" placeholder="Write a new announcement..." required></textarea>
+            <div class="flex justify-end mt-2">
+              <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 text-sm btn-animated">
+                Post Announcement
+              </button>
+              <button type="button" id="cancelAddAnnouncementBtn" class="ml-2 bg-gray-300 text-gray-800 px-3 py-1 rounded-lg hover:bg-gray-400 text-sm btn-animated">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div id="announcementList" class="space-y-4 max-h-60 overflow-auto pr-2">
+          <div th:each="a : ${announcements}" class="announcement animate-fade-in border-b pb-2 relative group rounded-lg p-2">
+            <button type="button"
+                    class="hidden group-hover:block absolute top-0 right-0 text-xs text-red-500 hover:underline"
+                    th:onclick="'deleteAnnouncement(' + ${a.id} + ')'">
+              Delete
+            </button>
+
+            <div class="flex items-center space-x-2">
+              <p class="text-sm font-semibold text-blue-600" th:text="${a.username}">Admin</p>
+              <p class="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded" th:text="${a.role}">Admin</p>
+            </div>
+
+            <p th:text="${a.content}"
+               th:id="'announcement-text-' + ${a.id}"
+               class="text-xs text-gray-700 mt-1 cursor-pointer"
+               onclick="editAnnouncement(this)">
+              Announcement content here.
+            </p>
+
+            <p class="text-[10px] text-gray-400 mt-1" th:text="${#temporals.format(a.createdAt, 'HH:mm')}">15:00</p>
+          </div>
+        </div>
+
+        <!-- Forum (below announcements) -->
+        <div class="mt-4">
+          <h3 class="text-lg font-semibold text-green-700 mb-3">Forum Discussion</h3>
+          <div class="space-y-3 max-h-60 overflow-auto pr-2">
+            <div th:each="d, stat : ${discussions}"
+                 class="forum-message p-2 rounded-lg border-b animate-fade-in"
+                 th:style="'animation-delay: ' + ${stat.index * 0.1} + 's'">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-green-700 font-semibold" th:text="${d.sender.username}">User</span>
+                <span class="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded" th:text="${d.sender.role}">Role</span>
+              </div>
+              <p class="text-gray-700 text-sm" th:text="${d.message}">Forum message here.</p>
+              <p class="text-[10px] text-gray-400 mt-1" th:text="${#temporals.format(d.createdAt, 'dd/MM HH:mm')}">15:00</p>
+            </div>
+          </div>
+          <form th:action="@{'/forum/send'}" method="post" class="mt-3 flex gap-2">
+            <input name="message" required maxlength="500" placeholder="Write a message..." class="flex-1 border rounded-lg px-3 py-2 text-sm" />
+            <button type="submit" class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm">Send</button>
+          </form>
         </div>
       </div>
     </div>
-
-    <!-- ===== ANNOUNCEMENT BOX ===== -->
-    <aside class="bg-white w-1/4 ml-6 p-4 rounded-2xl border-2 border-green-400 shadow-md" id="announcementBox">
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="text-blue-700 font-semibold flex items-center space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M13 16h-1v-4h-1m1-4h.01M12 20h.01M12 4h.01" />
-          </svg>
-          <span>Announcement</span>
-        </h2>
-        <button id="addAnnouncementBtn" 
-                class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded-lg">
-          + Add
-        </button>
-      </div>
-
-      <div id="announcementList" class="space-y-4">
-        <div th:each="a : ${announcements}" class="border-b pb-2 relative group">
-          <button type="button" 
-                  class="hidden group-hover:block absolute top-0 right-0 text-xs text-red-500 hover:underline"
-                  th:onclick="'deleteAnnouncement(' + ${a.id} + ')'">
-            Delete
-          </button>
-
-          <div class="flex items-center space-x-2">
-            <p class="text-sm font-semibold text-blue-600" th:text="${a.username}">John Doe</p>
-            <p class="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded" th:text="${a.role}">Admin</p>
-          </div>
-
-          <p th:text="${a.content}" 
-             th:id="'announcement-text-' + ${a.id}" 
-             class="text-xs text-gray-700 mt-1 cursor-pointer"
-             onclick="editAnnouncement(this)">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-          </p>
-
-          <p class="text-[10px] text-gray-400 mt-1" th:text="${#temporals.format(a.createdAt, 'HH:mm')}">15:00</p>
-        </div>
-      </div>
-    </aside>
+  </main>
   </main>
 
   <!-- ===== FOOTER ===== -->
@@ -196,56 +266,77 @@
     </div>
   </footer>
 
-  <!-- ===== ADD ANNOUNCEMENT MODAL ===== -->
-  <div id="addAnnouncementModal" 
-       class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-lg w-80">
-      <h3 class="text-blue-700 font-semibold mb-3">Add Announcement</h3>
-      <form id="announcementForm" th:action="@{/admin/announcement/add}" method="post">
-        <textarea name="content" rows="3" 
-                  class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Write your announcement..."></textarea>
-        <div class="mt-4 text-right space-x-2">
-          <button type="button" id="cancelAdd" class="text-gray-500 text-sm hover:underline">Cancel</button>
-          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-1 rounded-lg">
-            Save
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+
 
   <!-- ===== SCRIPT ===== -->
   <script>
-    // === Tabs ===
+    // Tab switching logic
     const tabSubject = document.getElementById('tab-subject');
     const tabParticipant = document.getElementById('tab-participant');
+    const tabForum = document.getElementById('tab-forum');
     const contentSubject = document.getElementById('content-subject');
     const contentParticipant = document.getElementById('content-participant');
+    const contentForum = document.getElementById('content-forum');
+
+    // Helper to safely remove classes from an element if it exists
+    const safeRemoveClasses = (el, ...classes) => { if (el) el.classList.remove(...classes); };
+    const safeAddClasses = (el, ...classes) => { if (el) el.classList.add(...classes); };
+
+    const addCourseBtn = document.getElementById('add-course-btn');
+    const addParticipantBtn = document.getElementById('add-participant-btn');
 
     tabSubject.addEventListener('click', () => {
-      tabSubject.classList.add('border-b-2', 'border-blue-600', 'text-blue-700', 'font-semibold');
-      tabParticipant.classList.remove('border-b-2', 'border-blue-600', 'text-blue-700', 'font-semibold');
-      tabParticipant.classList.add('text-gray-500');
-      contentSubject.classList.remove('hidden');
-      contentParticipant.classList.add('hidden');
+      safeAddClasses(tabSubject, 'border-b-2', 'border-blue-600', 'text-blue-700', 'font-semibold');
+      safeRemoveClasses(tabParticipant, 'border-b-2', 'border-blue-600', 'text-blue-700', 'font-semibold');
+      safeAddClasses(tabParticipant, 'text-gray-500');
+      if (contentSubject) contentSubject.classList.remove('hidden');
+      if (contentParticipant) contentParticipant.classList.add('hidden');
+      if (addCourseBtn) addCourseBtn.classList.remove('hidden');
+      if (addParticipantBtn) addParticipantBtn.classList.add('hidden');
     });
 
     tabParticipant.addEventListener('click', () => {
-      tabParticipant.classList.add('border-b-2', 'border-blue-600', 'text-blue-700', 'font-semibold');
-      tabSubject.classList.remove('border-b-2', 'border-blue-600', 'text-blue-700', 'font-semibold');
-      tabSubject.classList.add('text-gray-500');
-      contentParticipant.classList.remove('hidden');
-      contentSubject.classList.add('hidden');
+      safeAddClasses(tabParticipant, 'border-b-2', 'border-blue-600', 'text-blue-700', 'font-semibold');
+      safeRemoveClasses(tabSubject, 'border-b-2', 'border-blue-600', 'text-blue-700', 'font-semibold');
+      safeAddClasses(tabSubject, 'text-gray-500');
+      if (contentParticipant) contentParticipant.classList.remove('hidden');
+      if (contentSubject) contentSubject.classList.add('hidden');
+      if (addCourseBtn) addCourseBtn.classList.add('hidden');
+      if (addParticipantBtn) addParticipantBtn.classList.remove('hidden');
     });
 
-    // === Modal Add ===
-    const addBtn = document.getElementById('addAnnouncementBtn');
-    const modal = document.getElementById('addAnnouncementModal');
-    const cancelAdd = document.getElementById('cancelAdd');
 
-    addBtn.addEventListener('click', () => modal.classList.remove('hidden'));
-    cancelAdd.addEventListener('click', () => modal.classList.add('hidden'));
+
+    if (tabForum) {
+      tabForum.addEventListener('click', () => {
+        safeAddClasses(tabForum, 'border-b-2', 'border-green-600', 'text-green-700', 'font-semibold');
+        safeRemoveClasses(tabSubject, 'border-b-2', 'border-blue-600', 'text-blue-700', 'font-semibold');
+        safeAddClasses(tabSubject, 'text-gray-500');
+        safeRemoveClasses(tabParticipant, 'border-b-2', 'border-blue-600', 'text-blue-700', 'font-semibold');
+        safeAddClasses(tabParticipant, 'text-gray-500');
+        if (contentForum) contentForum.classList.remove('hidden');
+        if (contentSubject) contentSubject.classList.add('hidden');
+        if (contentParticipant) contentParticipant.classList.add('hidden');
+
+        // hide add-course button when Forum tab active (if exists)
+        if (addCourseBtn) addCourseBtn.classList.add('hidden');
+      });
+    }
+
+    // === Add Announcement Form Toggle ===
+    const addAnnouncementBtn = document.getElementById('addAnnouncementBtn');
+    const addAnnouncementForm = document.getElementById('addAnnouncementForm');
+    const cancelAddAnnouncementBtn = document.getElementById('cancelAddAnnouncementBtn');
+
+    if (addAnnouncementBtn && addAnnouncementForm && cancelAddAnnouncementBtn) {
+      addAnnouncementBtn.addEventListener('click', function() {
+        addAnnouncementForm.classList.toggle('hidden');
+      });
+
+      cancelAddAnnouncementBtn.addEventListener('click', function() {
+        addAnnouncementForm.classList.add('hidden');
+      });
+    }
 
     // === Inline Edit ===
     async function editAnnouncement(pElement) {
@@ -291,6 +382,87 @@
         else alert('Failed to delete');
       }
     }
+
+    // === Add Participant Modal Logic ===
+    const adminAddParticipantModal = document.getElementById('admin-add-participant-modal');
+    const openAddParticipantBtn = document.getElementById('add-participant-btn');
+    const closeAddParticipantModalBtn = document.getElementById('admin-close-add-participant-modal-btn');
+    const cancelAddParticipantBtn = document.getElementById('admin-cancel-add-participant-btn');
+
+    if (openAddParticipantBtn) {
+      openAddParticipantBtn.addEventListener('click', () => {
+        adminAddParticipantModal.classList.remove('hidden');
+      });
+    }
+
+    if (closeAddParticipantModalBtn) {
+      closeAddParticipantModalBtn.addEventListener('click', () => {
+        adminAddParticipantModal.classList.add('hidden');
+      });
+    }
+
+    if (cancelAddParticipantBtn) {
+      cancelAddParticipantBtn.addEventListener('click', () => {
+        adminAddParticipantModal.classList.add('hidden');
+      });
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+      if (event.target === adminAddParticipantModal) {
+        adminAddParticipantModal.classList.add('hidden');
+      }
+    });
+
+
+
+    // Participant Details Modal Logic
+    const participantDetailsModal = document.getElementById('participant-details-modal');
+    const closeParticipantDetailsModalBtn = document.getElementById('close-participant-modal-btn');
+
+    document.body.addEventListener('click', function(event) {
+      if (event.target.classList.contains('view-participant-btn')) {
+        event.preventDefault();
+        const participantId = event.target.dataset.participantId;
+        fetchParticipantDetails(participantId);
+      }
+    });
+
+    closeParticipantDetailsModalBtn.addEventListener('click', () => {
+      participantDetailsModal.classList.add('hidden');
+    });
+
+    window.addEventListener('click', (event) => {
+      if (event.target === participantDetailsModal) {
+        participantDetailsModal.classList.add('hidden');
+      }
+    });
+
+    function fetchParticipantDetails(id) {
+      fetch(`/api/admin/participants/${id}`) // Assuming an API endpoint for fetching participant details
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(participant => {
+          document.getElementById('modal-username').value = participant.username;
+          document.getElementById('modal-email').value = participant.email;
+          document.getElementById('modal-role').value = participant.role;
+
+          // Update form actions with participant ID
+          document.getElementById('editParticipantForm').action = `/admin/participant/${participant.id}/update`;
+          document.getElementById('deleteParticipantForm').action = `/admin/participant/${participant.id}/delete`;
+
+          participantDetailsModal.classList.remove('hidden');
+        })
+        .catch(error => {
+          console.error('Error fetching participant details:', error);
+          alert('Failed to load participant details.');
+        });
+    }
+
   </script>
 </body>
 </html>

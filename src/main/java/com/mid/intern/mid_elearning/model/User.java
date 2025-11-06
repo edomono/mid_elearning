@@ -111,6 +111,24 @@ public class User {
         this.approved = approved;
     }
 
+    // ✅ Relationship: Student enrolled subjects
+    @jakarta.persistence.ManyToMany
+    @jakarta.persistence.JoinTable(
+            name = "student_subjects",
+            joinColumns = @jakarta.persistence.JoinColumn(name = "student_id"),
+            inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "subject_id")
+    )
+    private java.util.Set<Subject> subjects = new java.util.HashSet<>();
+
+    public java.util.Set<Subject> getSubjects() {
+        return subjects;
+    }
+
+    public void setSubjects(java.util.Set<Subject> subjects) {
+        this.subjects = subjects;
+    }
+
+
 
     // ==================== HELPER METHOD ====================
 

@@ -3,24 +3,24 @@ package com.mid.intern.mid_elearning.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
-import com.mid.intern.mid_elearning.service.UserDetailsServiceImpl;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
+
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
-    private final UserDetailsServiceImpl userDetailsService;
-
-    public SecurityConfig(UserDetailsServiceImpl userDetailsService) {
-        this.userDetailsService = userDetailsService;
+    public SecurityConfig() {
     }
 
     @Bean
@@ -28,14 +28,8 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
-
+    // authenticationProvider removed: rely on AuthenticationConfiguration and
+    // the application's UserDetailsService + PasswordEncoder beans (Spring Boot will wire them).
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
@@ -44,14 +38,14 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler successHandler() {
         return (request, response, authentication) -> {
-            String redirectURL = request.getContextPath();
+            String redirectURL = "";
 
             if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-                redirectURL += "/admin/dashboard";
+                redirectURL = "/admin/dashboard";
             } else if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MENTOR"))) {
-                redirectURL += "/mentor/dashboard";
+                redirectURL = "/mentor/dashboard";
             } else {
-                redirectURL += "/user/home";
+                redirectURL = "/user/dashboard";
             }
 
             response.sendRedirect(redirectURL);
@@ -60,11 +54,10 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable()) // untuk dev; enable di production
-            .authorizeHttpRequests(auth -> auth
+                http
+                    .authorizeHttpRequests(auth -> auth
                 // ✅ hanya halaman publik yang boleh diakses tanpa login
-                .requestMatchers("/", "/login", "/process-login",
+                .requestMatchers("/", "/login", "/process-login", "/logout",
                                  "/css/**", "/js/**", "/images/**").permitAll()
 
                 // ✅ akses role-based
@@ -89,7 +82,7 @@ public class SecurityConfig {
                 .deleteCookies("JSESSIONID")
                 .permitAll()
             )
-            .authenticationProvider(authenticationProvider());
+            ;
 
         return http.build();
     }

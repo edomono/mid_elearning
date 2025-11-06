@@ -81,7 +81,9 @@ public class AssignmentService {
 
             // Simpan file jika ada
             if (file != null && !file.isEmpty()) {
-                String cleanFileName = file.getOriginalFilename().replaceAll("\\s+", "_");
+                String original = file.getOriginalFilename();
+                if (original == null || original.isBlank()) original = "upload";
+                String cleanFileName = original.replaceAll("\\s+", "_");
                 String fileName = System.currentTimeMillis() + "_" + cleanFileName;
                 Path filePath = rootUploadDir.resolve(fileName).normalize();
 
@@ -99,7 +101,59 @@ public class AssignmentService {
 
         } catch (IOException e) {
             System.err.println("❌ Gagal menyimpan file assignment: " + e.getMessage());
-            e.printStackTrace();
+        }
+    }
+
+    public void updateAssignment(Long assignmentId, Assignment assignmentDetails, MultipartFile file) {
+        try {
+            Optional<Assignment> assignmentOpt = assignmentRepository.findById(assignmentId);
+            if (assignmentOpt.isEmpty()) {
+                System.err.println("❌ Assignment not found with ID: " + assignmentId);
+                return;
+            }
+
+            Assignment existingAssignment = assignmentOpt.get();
+            existingAssignment.setTitle(assignmentDetails.getTitle());
+            existingAssignment.setDescription(assignmentDetails.getDescription());
+            existingAssignment.setDueDate(assignmentDetails.getDueDate());
+
+            // Buat folder upload jika belum ada
+            if (!Files.exists(rootUploadDir)) {
+                Files.createDirectories(rootUploadDir);
+                System.out.println("📁 Folder uploads dibuat di: " + rootUploadDir.toAbsolutePath());
+            }
+
+            // Simpan file jika ada
+            if (file != null && !file.isEmpty()) {
+                String original = file.getOriginalFilename();
+                if (original == null || original.isBlank()) original = "upload";
+                String cleanFileName = original.replaceAll("\\s+", "_");
+                String fileName = System.currentTimeMillis() + "_" + cleanFileName;
+                Path filePath = rootUploadDir.resolve(fileName).normalize();
+
+                file.transferTo(filePath.toFile());
+
+                // Hapus file lama jika ada
+                if (existingAssignment.getFilePath() != null) {
+                    try {
+                        Path oldFilePath = Paths.get(System.getProperty("user.dir")).resolve(existingAssignment.getFilePath()).normalize().toAbsolutePath();
+                        Files.deleteIfExists(oldFilePath);
+                    } catch (IOException e) {
+                        System.err.println("⚠️ Gagal menghapus file lama: " + existingAssignment.getFilePath());
+                    }
+                }
+
+                // Simpan path relatif agar bisa diakses via browser
+                existingAssignment.setFileName(fileName);
+                existingAssignment.setFilePath("uploads/assignments/" + fileName);
+            }
+
+            assignmentRepository.save(existingAssignment);
+
+            System.out.println("✅ Assignment berhasil diperbarui: " + existingAssignment.getTitle());
+
+        } catch (IOException e) {
+            System.err.println("❌ Gagal menyimpan file assignment: " + e.getMessage());
         }
     }
 
@@ -119,8 +173,18 @@ public class AssignmentService {
     // 🔍 GET SUBJECT ID BY ASSIGNMENT
     // =============================================================
     public Long getAssignmentSubjectId(Long assignmentId) {
-        return assignmentRepository.findById(assignmentId)
-                .map(a -> a.getSubject().getId())
+    return assignmentRepository.findById(assignmentId)
+        .map(a -> (a.getSubject() != null) ? a.getSubject().getId() : null)
+        .orElse(null);
+    }
+
+    // =============================================================
+    // 🔎 GET ASSIGNMENT ID BY SUBMISSION
+    // Used when we have a submission id and need the parent assignment id
+    // =============================================================
+    public Long getAssignmentIdBySubmissionId(Long submissionId) {
+        return submissionRepository.findById(submissionId)
+                .map(s -> (s.getAssignment() != null) ? s.getAssignment().getId() : null)
                 .orElse(null);
     }
 
@@ -165,7 +229,9 @@ public class AssignmentService {
         if (file != null && !file.isEmpty()) {
             if (!Files.exists(rootUploadDir)) Files.createDirectories(rootUploadDir);
 
-            String cleanFileName = file.getOriginalFilename().replaceAll("\\s+", "_");
+            String original = file.getOriginalFilename();
+            if (original == null || original.isBlank()) original = "upload";
+            String cleanFileName = original.replaceAll("\\s+", "_");
             String fileName = System.currentTimeMillis() + "_" + cleanFileName;
             Path filePath = rootUploadDir.resolve(fileName).normalize();
 

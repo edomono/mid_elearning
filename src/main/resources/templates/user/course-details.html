@@ -64,9 +64,9 @@
   <!-- HEADER -->
   <div th:replace="user/dashboard :: header"></div>
   <main class="flex-1 flex justify-center items-start py-10 px-6">
-    <div class="bg-white w-3/4 p-6 rounded-2xl border-2 border-green-400 shadow-md flex gap-8">
+    <div class="bg-white w-full max-w-7xl p-6 rounded-2xl border-2 border-green-400 shadow-md flex flex-col-reverse md:flex-row gap-8">
       <!-- LEFT: Course content -->
-      <div class="flex-1">
+      <div class="w-full md:w-3/4">
         <!-- Course Info Card -->
         <div class="bg-blue-50 rounded-xl p-6 mb-6 border border-blue-200 shadow-sm animate-slide-in">
           <div class="flex items-center gap-4 mb-4">
@@ -96,7 +96,7 @@
                  class="assignment-card animate-slide-down bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-blue-400 shadow-sm">
               <div class="flex justify-between items-start mb-2">
                 <h3 class="text-lg font-semibold text-blue-800" th:text="${assignment.title}">Assignment Title</h3>
-                <span class="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full" th:text="${#temporals.format(assignment.deadline, 'dd MMM yyyy HH:mm')}">Deadline</span>
+                <span class="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full" th:text="${#temporals.format(assignment.dueDate, 'dd MMM yyyy HH:mm')}">Deadline</span>
               </div>
               <p class="text-gray-600 text-sm mb-3" th:text="${assignment.description}">Assignment description goes here...</p>
               <div class="flex items-center gap-2 mt-3">
@@ -109,15 +109,14 @@
                   <span class="text-xs text-gray-500" th:text="${assignment.fileName}">(filename.pdf)</span>
                 </a>
 
-                <!-- Link to student assignment page to submit or view -->
-                <a th:if="${assignment.id != null}" th:href="@{'/user/assignment/' + ${assignment.id}}"
-                   class="ml-3 inline-flex items-center gap-2 text-sm text-white bg-green-600 px-3 py-1.5 rounded-lg hover:bg-green-500 btn-animated">
+                <button type="button" th:if="${assignment.id != null}" th:data-assignment-id="${assignment.id}"
+                        class="open-assignment-modal ml-3 inline-flex items-center gap-2 text-sm text-white bg-green-600 px-3 py-1.5 rounded-lg hover:bg-green-500 btn-animated">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                   </svg>
                   <span>Open / Submit</span>
-                </a>
-                <button th:unless="${assignment.id != null}" class="ml-3 inline-flex items-center gap-2 text-sm text-white bg-gray-400 px-3 py-1.5 rounded-lg cursor-not-allowed" disabled>
+                </button>
+                <button type="button" th:unless="${assignment.id != null}" class="ml-3 inline-flex items-center gap-2 text-sm text-white bg-gray-400 px-3 py-1.5 rounded-lg cursor-not-allowed" disabled>
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                   </svg>
@@ -136,8 +135,8 @@
         </div>
       </div>
 
-      <!-- RIGHT: sidebar (Announcements + Forum) -->
-      <aside class="bg-white w-1/4 ml-6 p-4 rounded-2xl border-2 border-green-400 shadow-md" id="announcementBox">
+  <!-- RIGHT: sidebar (Announcements + Forum) -->
+  <aside class="bg-white w-full md:w-1/4 md:ml-6 p-4 rounded-2xl border-2 border-green-400 shadow-md" id="announcementBox">
         <div class="flex justify-between items-center mb-3">
           <h2 class="text-blue-700 font-semibold flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -157,7 +156,7 @@
               <p class="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded" th:text="${a.role}">Role</p>
             </div>
 
-            <p th:text="${a.content}" th:id="'announcement-text-' + ${a.id}" class="text-xs text-gray-700 mt-1">
+            <p th:text="${a.content}" th:id="'announcement-text-' + ${a.id}" class="text-xs text-gray-700 mt-1 break-words">
               Announcement content...
             </p>
 
@@ -176,7 +175,7 @@
                 <span class="text-green-700 font-semibold" th:text="${d.sender.username}">User</span>
                 <span class="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded" th:text="${d.sender.role}">Role</span>
               </div>
-              <p class="text-gray-700 text-sm" th:text="${d.message}">Forum message here.</p>
+              <p class="text-gray-700 text-sm break-words" th:text="${d.message}">Forum message here.</p>
               <p class="text-[10px] text-gray-400 mt-1" th:text="${#temporals.format(d.createdAt, 'dd/MM HH:mm')}">15:00</p>
             </div>
           </div>
@@ -195,5 +194,76 @@
   </main>
   <!-- FOOTER -->
   <div th:replace="user/dashboard :: footer"></div>
+  <div th:replace="~{fragments/assignment-details-modal :: assignment-details-modal}"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const assignmentModal = document.getElementById('assignment-modal');
+      const closeModalBtn = document.getElementById('close-modal-btn');
+      const openAssignmentModalButtons = document.querySelectorAll('.open-assignment-modal');
+
+      const modalTitle = document.getElementById('modal-title');
+      const modalDescription = document.getElementById('modal-description');
+      const modalFileLink = document.getElementById('modal-file-link');
+      const modalEditLink = document.getElementById('modal-edit-link'); // This might not be needed for user
+      const modalSubmissionsList = document.getElementById('modal-submissions-list');
+      const noSubmissionsMsg = document.getElementById('no-submissions-msg');
+
+      // Extract subjectId from the current URL (e.g., /user/course/{subjectId})
+      const pathSegments = window.location.pathname.split('/');
+      const subjectId = pathSegments[3]; // Assuming URL is /user/course/{subjectId}
+
+      openAssignmentModalButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const assignmentId = this.dataset.assignmentId;
+
+          fetch(`/user/assignment/${assignmentId}/details`) // Assuming a new endpoint for user
+            .then(response => response.json())
+            .then(assignment => {
+              modalTitle.textContent = assignment.title;
+              modalDescription.textContent = assignment.description;
+
+              if (assignment.filePath) {
+                modalFileLink.href = '/' + assignment.filePath;
+                modalFileLink.querySelector('span').textContent = 'View Assignment File (' + assignment.fileName + ')';
+                modalFileLink.classList.remove('hidden');
+              } else {
+                modalFileLink.classList.add('hidden');
+              }
+
+              // For user, edit link might not be relevant, or it could be a submission link
+              // For now, I'll hide it or set it to a default.
+              modalEditLink.classList.add('hidden'); // Hide edit link for users
+
+              // Clear previous submissions
+              modalSubmissionsList.innerHTML = '';
+
+              // For users, we might only show their own submission, or a message if they haven't submitted
+              // This part needs to be adapted based on how user submissions are handled.
+              // For now, I'll just show a placeholder.
+              noSubmissionsMsg.classList.remove('hidden'); // Show "No Submissions Yet" by default for user
+
+              assignmentModal.classList.remove('hidden');
+            })
+            .catch(error => {
+              console.error('Error fetching assignment details:', error);
+              alert('Failed to load assignment details.');
+            });
+        });
+      });
+
+      closeModalBtn.addEventListener('click', function() {
+        assignmentModal.classList.add('hidden');
+      });
+
+      // Close modal when clicking outside of it
+      assignmentModal.addEventListener('click', function(event) {
+        if (event.target === assignmentModal) {
+          assignmentModal.classList.add('hidden');
+        }
+      });
+    });
+  </script>
+
 </body>
 </html>

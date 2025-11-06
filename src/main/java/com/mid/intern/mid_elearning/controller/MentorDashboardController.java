@@ -23,7 +23,7 @@ import com.mid.intern.mid_elearning.model.User;
 import com.mid.intern.mid_elearning.service.AnnouncementService;
 import com.mid.intern.mid_elearning.service.AssignmentService;
 import com.mid.intern.mid_elearning.service.SubjectService;
-import com.mid.intern.mid_elearning.service.SubmissionService;
+
 import com.mid.intern.mid_elearning.service.UserService;
 
 @Controller
@@ -34,19 +34,21 @@ public class MentorDashboardController {
     private final UserService userService;
     private final AnnouncementService announcementService;
     private final AssignmentService assignmentService;
-    private final SubmissionService submissionService;
+
+    private final com.mid.intern.mid_elearning.service.ForumService forumService;
 
     public MentorDashboardController(
             SubjectService subjectService,
             UserService userService,
             AnnouncementService announcementService,
             AssignmentService assignmentService,
-            SubmissionService submissionService) {
+
+            com.mid.intern.mid_elearning.service.ForumService forumService) {
         this.subjectService = subjectService;
         this.userService = userService;
         this.announcementService = announcementService;
         this.assignmentService = assignmentService;
-        this.submissionService = submissionService;
+                this.forumService = forumService;
     }
 
     // =============================================================
@@ -54,14 +56,15 @@ public class MentorDashboardController {
     // =============================================================
     @GetMapping("/dashboard")
     public String showDashboard(Model model) {
-        List<User> students = userService.getAllUsers().stream()
-                .filter(u -> "USER".equalsIgnoreCase(u.getRole()))
-                .collect(Collectors.toList());
+    List<User> students = userService.getAllUsers().stream()
+        .filter(u -> "USER".equalsIgnoreCase(u.getRole()))
+        .collect(Collectors.toList());
 
-        model.addAttribute("subjects", subjectService.getAllSubjects());
-        model.addAttribute("students", students);
-        model.addAttribute("announcements", announcementService.getAllAnnouncementsSorted());
-        return "mentor/dashboard";
+    model.addAttribute("subjects", subjectService.getAllSubjects());
+    model.addAttribute("students", students);
+    model.addAttribute("announcements", announcementService.getAllAnnouncementsSorted());
+    model.addAttribute("discussions", forumService.getAllDiscussions());
+    return "mentor/dashboard";
     }
 
     // =============================================================
@@ -143,6 +146,9 @@ public class MentorDashboardController {
 
         model.addAttribute("subject", subject);
         model.addAttribute("assignments", assignments);
+        model.addAttribute("user", userService.getCurrentUser());
+        model.addAttribute("announcements", announcementService.getAllAnnouncementsSorted());
+        model.addAttribute("discussions", forumService.getAllDiscussions());
         return "mentor/course-details";
     }
 
@@ -162,27 +168,8 @@ public class MentorDashboardController {
         return "redirect:/mentor/dashboard";
     }
 
-    // =============================================================
-    // 👥 PARTICIPANTS
-    // =============================================================
-    @GetMapping("/participants")
-    public String viewParticipants(Model model) {
-        List<User> students = userService.getAllUsers().stream()
-                .filter(u -> "USER".equalsIgnoreCase(u.getRole()))
-                .collect(Collectors.toList());
 
-        model.addAttribute("students", students);
-        return "mentor/participants";
-    }
 
-    @GetMapping("/participants/{id}")
-    public String viewParticipantDetails(@PathVariable("id") Long id, Model model) {
-        Optional<User> userOpt = userService.getUserById(id);
-        if (userOpt.isEmpty()) return "redirect:/mentor/participants";
 
-        User student = userOpt.get();
-        model.addAttribute("student", student);
-        model.addAttribute("submissions", submissionService.getSubmissionsByUser(student));
-        return "mentor/participant-details";
-    }
+
 }

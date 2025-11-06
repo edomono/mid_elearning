@@ -8,8 +8,10 @@
 
 <body class="bg-blue-600 min-h-screen flex flex-col justify-between">
 
-  <!-- Header (kosong dulu) -->
-  <header class="bg-white shadow-md py-4 px-8"></header>
+  <!-- Header (Back button) -->
+  <header class="bg-white shadow-md py-4 px-8">
+    <div th:insert="~{fragments/back-button :: backButton(defaultUrl='/admin/dashboard')}"></div>
+  </header>
 
   <!-- Body -->
   <main class="flex flex-col items-center justify-center flex-1 px-6">

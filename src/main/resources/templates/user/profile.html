@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#0074cc] min-h-screen flex flex-col">
+
+<div th:replace="user/dashboard :: header"></div>
+
+<main class="flex justify-center items-start py-10 px-6 flex-1">
+
+  <div class="bg-white w-1/2 p-6 rounded-2xl border-2 border-green-400 shadow-md">
+
+    <h1 class="text-xl font-bold text-blue-700 mb-6">My Profile</h1>
+
+    <form method="post" th:action="@{/user/profile}" class="space-y-4">
+
+      <div>
+        <label class="text-sm font-semibold">Full Name</label>
+        <input type="text" name="username" th:value="${user.username}"
+               class="w-full border rounded px-4 py-2 text-sm">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold">Email</label>
+        <input type="email" name="email" th:value="${user.email}" readonly
+               class="w-full border rounded px-4 py-2 text-sm bg-gray-100">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold">New Password (optional)</label>
+        <input type="password" name="password"
+               class="w-full border rounded px-4 py-2 text-sm">
+      </div>
+
+      <button class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">
+        Save Changes
+      </button>
+    </form>
+
+  </div>
+</main>
+
+<div th:replace="user/dashboard :: footer"></div>
+
+</body>
+</html>

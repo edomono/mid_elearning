@@ -15,12 +15,10 @@ public class DashboardController {
 
         String role = auth.getAuthorities().iterator().next().getAuthority();
 
-        if (role.equals("ROLE_ADMIN")) {
-            return "admin/dashboard";
-        } else if (role.equals("ROLE_MENTOR")) {
-            return "mentor/dashboard";
-        } else {
-            return "user/dashboard";
-        }
+        return switch (role) {
+            case "ROLE_ADMIN" -> "admin/dashboard";
+            case "ROLE_MENTOR" -> "mentor/dashboard";
+            default -> "user/dashboard";
+        };
     }
 }

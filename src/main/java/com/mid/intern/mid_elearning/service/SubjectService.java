@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mid.intern.mid_elearning.model.Subject;
+import com.mid.intern.mid_elearning.model.User;
 import com.mid.intern.mid_elearning.repository.SubjectRepository;
 
 @Service
@@ -25,6 +26,15 @@ public class SubjectService {
     public List<Subject> getAllSubjects() {
         return subjectRepository.findAll();
     }
+
+    // =============================================================
+    // 📚 GET SUBJECTS BY STUDENT
+    // =============================================================
+    @Transactional(readOnly = true)
+    public List<Subject> getSubjectsByStudent(User student) {
+        return subjectRepository.findByStudents_Id(student.getId());
+    }
+
 
     // =============================================================
     // 💾 SAVE SUBJECT
@@ -68,5 +78,22 @@ public class SubjectService {
     @Transactional(readOnly = true)
     public Optional<Subject> getSubjectById(Long id) {
         return subjectRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public Subject getSubjectByIdOrThrow(Long id) {
+        return subjectRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Subject not found with ID: " + id));
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<Subject> getSubjectsByStudentId(Long studentId) {
+        return subjectRepository.findByStudents_Id(studentId);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsByName(String name) {
+        return subjectRepository.existsByName(name);
     }
 }
