@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<!-- Reusable back button fragment -->
+<div xmlns:th="http://www.thymeleaf.org" th:fragment="backButton(defaultUrl)">
+  <button type="button"
+    th:attr="data-default-url=${defaultUrl}"
+    onclick="if(document.referrer) history.back(); else window.location.href=this.getAttribute('data-default-url')"
+    class="mr-3 inline-flex items-center gap-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0L3.586 10l4.707-4.707a1 1 0 111.414 1.414L6.414 10l3.293 3.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+    </svg>
+    <span>Back</span>
+  </button>
+</div>

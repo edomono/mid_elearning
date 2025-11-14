@@ -1,0 +1,5 @@
+I have modified the `updateSubmission` method in `SubmissionController.java` to return `ResponseEntity<String>` instead of a redirect. This change prevents a full page reload, which is necessary to keep the modal open after a submission update.
+
+Additionally, I have created a file named `frontend_instructions.txt` which outlines the necessary changes that need to be made on the frontend (HTML and JavaScript) to implement an AJAX submission for the update form. These frontend changes are crucial for the modal to remain open and display the response from the server.
+
+Please refer to `frontend_instructions.txt` for detailed steps on how to modify the frontend.

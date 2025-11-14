@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mentor | Course Details</title>
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Animations and transitions */
+    @keyframes slideIn {
+      from { transform: translateX(-20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-slide-in {
+      animation: slideIn 0.5s ease-out;
+    }
+    .animate-slide-down {
+      animation: slideDown 0.5s ease-out;
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+    .assignment-card {
+      transition: all 0.3s ease-out;
+    }
+    .assignment-card:hover {
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 8px 12px -3px rgba(0, 0, 0, 0.1);
+    }
+    .forum-message {
+      transition: all 0.2s ease;
+    }
+    .forum-message:hover {
+      transform: translateX(4px);
+      background-color: #f8fafc;
+    }
+    .announcement {
+      transition: all 0.2s ease;
+    }
+    .announcement:hover {
+      background-color: #f0f9ff;
+      transform: translateX(2px);
+    }
+    /* Button and link animations */
+    .btn-animated {
+      transition: all 0.2s ease;
+    }
+    .btn-animated:hover {
+      transform: scale(1.05);
+    }
+    .btn-animated:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+
+<body class="bg-[#0074cc] min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <div th:replace="user/dashboard :: header"></div>
+  <main class="flex-1 flex justify-center items-start py-10 px-6">
+    <div class="bg-white w-full max-w-7xl p-6 rounded-2xl border-2 border-green-400 shadow-md flex flex-col-reverse md:flex-row gap-8">
+      <!-- LEFT: Course content -->
+      <div class="w-full md:w-3/4">
+        <!-- Course Info Card -->
+        <div class="bg-blue-50 rounded-xl p-6 mb-6 border border-blue-200 shadow-sm animate-slide-in">
+          <div class="flex items-center gap-4 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2" />
+            </svg>
+            <h1 class="text-2xl font-bold text-blue-700" th:text="${subject.name}">Course Name</h1>
+          </div>
+          <p class="text-gray-600 text-base mb-2" th:text="${subject.description}">Course Description Here</p>
+          <div class="flex gap-8 mt-2">
+            <p class="text-sm text-gray-600"><span class="font-medium">Kode Course:</span> <span class="text-blue-600 font-semibold" th:text="${subject.code}">CS101</span></p>
+            <p class="text-sm text-gray-600"><span class="font-medium">ID:</span> <span class="text-blue-600 font-semibold" th:text="${subject.id}">1</span></p>
+          </div>
+        </div>
+
+        <!-- Assignments Section -->
+        <div class="bg-white rounded-xl border-2 border-blue-400 p-6">
+          <h2 class="text-xl font-bold text-blue-700 mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            Assignments
+          </h2>
+          <div th:if="${assignments != null and !assignments.isEmpty()}" class="space-y-4">
+            <div th:each="assignment, stat : ${assignments}"
+                 th:style="'animation-delay: ' + ${stat.index * 0.1} + 's'"
+                 class="assignment-card animate-slide-down bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-blue-400 shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <h3 class="text-lg font-semibold text-blue-800" th:text="${assignment.title}">Assignment Title</h3>
+                <span class="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full" th:text="${#temporals.format(assignment.dueDate, 'dd MMM yyyy HH:mm')}">Deadline</span>
+              </div>
+              <p class="text-gray-600 text-sm mb-3" th:text="${assignment.description}">Assignment description goes here...</p>
+              <div class="flex items-center gap-2 mt-3">
+                <a th:if="${assignment.filePath != null}" th:href="@{'/' + ${assignment.filePath}}" download
+                   class="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-lg transition-all duration-200 btn-animated">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>Download Materials</span>
+                  <span class="text-xs text-gray-500" th:text="${assignment.fileName}">(filename.pdf)</span>
+                </a>
+
+                <button type="button" th:if="${assignment.id != null}" th:data-assignment-id="${assignment.id}"
+                        class="open-assignment-modal ml-3 inline-flex items-center gap-2 text-sm text-white bg-green-600 px-3 py-1.5 rounded-lg hover:bg-green-500 btn-animated">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Open / Submit</span>
+                </button>
+                <button type="button" th:unless="${assignment.id != null}" class="ml-3 inline-flex items-center gap-2 text-sm text-white bg-gray-400 px-3 py-1.5 rounded-lg cursor-not-allowed" disabled>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Open / Submit</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div th:if="${assignments == null or assignments.isEmpty()}" class="text-center py-8 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p class="text-lg font-medium">No Assignments Yet</p>
+            <p class="text-sm">Add new assignments using the form below.</p>
+          </div>
+
+          <!-- Add New Assignment Form -->
+          <div class="mt-8 pt-6 border-t border-gray-200">
+            <h3 class="text-lg font-bold text-blue-700 mb-4">Add New Assignment</h3>
+            <form th:action="@{'/mentor/course/' + ${subject.id} + '/assignments/add'}"
+                  method="post" enctype="multipart/form-data"
+                  class="bg-gray-50 p-4 rounded-lg border border-gray-300 space-y-3">
+              <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Title</label>
+                <input type="text" name="title" class="border border-gray-300 rounded w-full p-2" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Description</label>
+                <textarea name="description" class="border border-gray-300 rounded w-full p-2 h-20"></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Upload File (PDF/PPT)</label>
+                <input type="file" name="file" accept=".pdf,.ppt,.pptx" class="border border-gray-300 rounded w-full p-2 bg-white">
+              </div>
+
+              <div>
+                <label for="dueDate" class="block text-sm font-semibold text-gray-600 mb-1">Due Date</label>
+                <input type="datetime-local" id="dueDate" name="dueDate" class="border border-gray-300 rounded w-full p-2" required>
+              </div>
+
+              <button type="submit"
+                      class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                + Add Assignment
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: sidebar (Announcements + Forum) -->
+      <aside class="bg-white w-full md:w-1/4 md:ml-6 p-4 rounded-2xl border-2 border-green-400 shadow-md" id="announcementBox">
+                <div id="announcementBox">
+                  <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-blue-700 font-semibold flex items-center space-x-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M13 16h-1v-4h-1m1-4h.01M12 20h.01M12 4h.01" />
+                      </svg>
+                      <span>Announcement</span>
+                    </h2>
+                    <button id="addAnnouncementBtn"
+                            class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded-lg">
+                      + Add
+                    </button>
+                  </div>
+        
+                  <!-- Add Announcement Form (initially hidden) -->
+                  <div id="addAnnouncementForm" class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 hidden animate-fade-in">
+                    <form th:action="@{'/admin/announcement/add'}" method="post">
+                      <textarea name="content" rows="3" class="w-full p-2 border rounded-md focus:ring-blue-400 focus:border-blue-400 text-sm" placeholder="Write a new announcement..."></textarea>
+                      <div class="flex justify-end mt-2">
+                        <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 text-sm btn-animated">
+                          Post Announcement
+                        </button>
+                        <button type="button" id="cancelAddAnnouncementBtn" class="ml-2 bg-gray-300 text-gray-800 px-3 py-1 rounded-lg hover:bg-gray-400 text-sm btn-animated">
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+        
+                  <div id="announcementList" class="space-y-4 mt-4">
+                    <div th:each="a, stat : ${announcements}"
+                         th:style="'animation-delay: ' + ${stat.index * 0.1} + 's'"
+                         class="announcement animate-fade-in border-b pb-2 relative group rounded-lg p-2">
+                      <button type="button"
+                              class="hidden group-hover:block absolute top-0 right-0 text-xs text-red-500 hover:underline"
+                              th:onclick="'deleteAnnouncement(' + ${a.id} + ')'">
+                        Delete
+                      </button>
+        
+                      <div class="flex items-center space-x-2">
+                        <p class="text-sm font-semibold text-blue-600" th:text="${a.username}">Mentor</p>
+                        <p class="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded" th:text="${a.role}">Role</p>
+                      </div>
+        
+                      <p th:text="${a.content}" th:id="'announcement-text-' + ${a.id}" class="text-xs text-gray-700 mt-1 break-words">
+                        Announcement content...
+                      </p>
+        
+                      <p class="text-[10px] text-gray-400 mt-1" th:text="${#temporals.format(a.createdAt, 'HH:mm')}">15:00</p>
+                    </div>
+                  </div>
+        
+                  <!-- Forum (below announcements) -->
+                  <div class="mt-4">
+                    <h3 class="text-lg font-semibold text-green-700 mb-3">Forum Discussion</h3>
+                    <div class="space-y-3 max-h-60 overflow-auto pr-2">
+                      <div th:each="d, stat : ${discussions}"
+                           th:style="'animation-delay: ' + ${stat.index * 0.1} + 's'"
+                           class="forum-message p-2 rounded-lg border-b animate-fade-in">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="text-green-700 font-semibold" th:text="${d.sender.username}">User</span>
+                          <span class="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded" th:text="${d.sender.role}">Role</span>
+                        </div>
+                        <p class="text-gray-700 text-sm break-words" th:text="${d.message}">Forum message here.</p>
+                        <p class="text-[10px] text-gray-400 mt-1" th:text="${#temporals.format(d.createdAt, 'dd/MM HH:mm')}">15:00</p>
+                      </div>
+                    </div>
+                    <form th:action="@{'/forum/send'}" method="post" class="mt-3 flex gap-2">
+                      <input type="hidden" name="redirectCourseId" th:value="${subject.id}" />
+                      <input name="message" required maxlength="500" placeholder="Write a message..."
+                             class="flex-1 border rounded-lg px-3 py-2 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 hover:border-blue-300" />
+                      <button type="submit"
+                              class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm btn-animated hover:bg-green-500">
+                        Send
+                      </button>
+                    </form>
+                  </div>
+                </div>
+        
+                <script>
+                  document.addEventListener('DOMContentLoaded', function() {
+                    const addAnnouncementBtn = document.getElementById('addAnnouncementBtn');
+                    const addAnnouncementForm = document.getElementById('addAnnouncementForm');
+                    const cancelAddAnnouncementBtn = document.getElementById('cancelAddAnnouncementBtn');
+        
+                    if (addAnnouncementBtn && addAnnouncementForm && cancelAddAnnouncementBtn) {
+                      addAnnouncementBtn.addEventListener('click', function() {
+                        addAnnouncementForm.classList.toggle('hidden');
+                      });
+        
+                      cancelAddAnnouncementBtn.addEventListener('click', function() {
+                        addAnnouncementForm.classList.add('hidden');
+                      });
+                    }
+                  });
+        
+                  function deleteAnnouncement(id) {
+                    if (confirm('Are you sure you want to delete this announcement?')) {
+                      fetch('/admin/announcement/' + id + '/delete', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                      })
+                      .then(response => {
+                        if (response.ok) {
+                          window.location.reload();
+                        } else {
+                          alert('Failed to delete announcement.');
+                        }
+                      })
+                      .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error deleting announcement.');
+                      });
+                    }
+                  }
+                </script>      </aside>
+    </div>
+  </main>
+  <!-- FOOTER -->
+  <div th:replace="user/dashboard :: footer"></div>
+
+  
+
+    <div th:replace="~{fragments/mentor-assignment-view-modal :: #mentor-assignment-modal}"></div>
+
+    <div th:replace="~{fragments/mentor-assignment-edit-modal :: #mentor-edit-assignment-modal}"></div>
+
+  
+
+    <script>
+
+      document.addEventListener('DOMContentLoaded', function() {
+
+        const viewModal = document.getElementById('mentor-assignment-modal');
+        const editModal = document.getElementById('mentor-edit-assignment-modal');
+  
+        const closeViewModalBtn = document.getElementById('mentor-close-modal-btn');
+        const closeEditModalBtn = document.getElementById('mentor-close-edit-modal-btn');
+        const openAssignmentModalButtons = document.querySelectorAll('.open-assignment-modal');
+        const editAssignmentBtn = document.getElementById('mentor-modal-edit-link'); // This is now a button
+        const backToViewBtn = document.getElementById('mentor-back-to-view-btn');
+  
+        let currentAssignment = null; // To store the assignment data
+  
+        // Extract subjectId from the current URL (e.g., /mentor/course/{subjectId})
+        const pathSegments = window.location.pathname.split('/');
+        const subjectId = pathSegments[3]; // Assuming URL is /mentor/course/{subjectId}
+  
+        // Get CSRF token from meta tags
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+  
+        // Event listeners for opening the view modal
+        openAssignmentModalButtons.forEach(button => {
+          button.addEventListener('click', function() {
+            const assignmentId = this.dataset.assignmentId;
+            fetchAssignmentDetails(assignmentId);
+          });
+        });
+  
+        // Event listeners for closing modals
+        closeViewModalBtn.addEventListener('click', function() {
+          viewModal.classList.add('hidden');
+        });
+  
+        closeEditModalBtn.addEventListener('click', function() {
+          editModal.classList.add('hidden');
+        });
+  
+        // Close modals when clicking outside
+        window.addEventListener('click', (event) => {
+          if (event.target === viewModal) {
+            viewModal.classList.add('hidden');
+          }
+          if (event.target === editModal) {
+            editModal.classList.add('hidden');
+          }
+        });
+  
+        // Event listener for opening the edit modal from the view modal
+        editAssignmentBtn.addEventListener('click', (event) => {
+          event.preventDefault(); // Prevent default link behavior
+          viewModal.classList.add('hidden');
+          populateEditModal(currentAssignment);
+          editModal.classList.remove('hidden');
+        });
+  
+        // Event listener for going back from edit modal to view modal
+        backToViewBtn.addEventListener('click', () => {
+          editModal.classList.add('hidden');
+          viewModal.classList.remove('hidden');
+        });
+  
+        async function fetchAssignmentDetails(id) {
+          try {
+            const response = await fetch(`/mentor/course/${subjectId}/assignments/${id}`);
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            currentAssignment = await response.json(); // Store the fetched assignment
+            populateViewModal(currentAssignment);
+            viewModal.classList.remove('hidden');
+          } catch (error) {
+            console.error('Error fetching assignment details:', error);
+            alert('Could not load assignment details.');
+          }
+        }
+  
+        function populateViewModal(assignment) {
+          document.getElementById('mentor-modal-title').textContent = assignment.title;
+          document.getElementById('mentor-modal-description').textContent = assignment.description;
+  
+          const fileLink = document.getElementById('mentor-modal-file-link');
+          if (assignment.filePath) {
+            fileLink.href = `/${assignment.filePath}`;
+            fileLink.querySelector('span').textContent = `View Assignment File (${assignment.fileName})`;
+            fileLink.classList.remove('hidden');
+          } else {
+            fileLink.classList.add('hidden');
+          }
+  
+          // Update the edit button's data for the edit modal
+          editAssignmentBtn.dataset.assignmentId = assignment.id;
+  
+          const submissionsList = document.getElementById('mentor-modal-submissions-list');
+          const noSubmissionsMsg = document.getElementById('mentor-no-submissions-msg');
+          submissionsList.innerHTML = '';
+  
+          if (assignment.submissions && assignment.submissions.length > 0) {
+            noSubmissionsMsg.classList.add('hidden');
+            assignment.submissions.forEach(submission => {
+              const submissionCard = `
+                <div class="submission-card bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-blue-400 shadow-sm animate-fade-in">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <p class="font-semibold text-gray-800">${submission.user.username}</p>
+                      <p class="text-sm text-gray-500">Submitted on: ${new Date(submission.uploadTime).toLocaleString()}</p>
+                      <a href="/${submission.filePath}" target="_blank" class="text-blue-600 text-sm hover:underline">View Submission</a>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-sm font-medium ${submission.grade ? 'text-green-600' : 'text-gray-500'}">
+                        Grade: <span>${submission.grade ? submission.grade : 'Not Graded'}</span>
+                      </p>
+                      <p class="text-xs text-gray-500 mt-1">${submission.comment ? 'Comment: ' + submission.comment : ''}</p>
+                    </div>
+                  </div>
+                  <!-- Inline Grade Form -->
+                  <div class="mt-4 pt-3 border-t border-gray-200">
+                    <form action="/mentor/submission/${submission.id}/grade" method="post" class="flex items-center gap-2">
+                      <input type="text" name="grade" placeholder="Grade" value="${submission.grade || ''}" class="border rounded px-2 py-1 text-sm w-24 focus:ring-2 focus:ring-blue-400">
+                      <input type="text" name="comment" placeholder="Add a comment..." value="${submission.comment || ''}" class="border rounded px-2 py-1 text-sm flex-grow focus:ring-2 focus:ring-blue-400">
+                      <input type="hidden" name="_csrf" value="${csrfToken}"> <!-- CSRF Token -->
+                      <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm btn-animated">
+                        Save Grade
+                      </button>
+                    </form>
+                    <form action="/mentor/submission/${submission.id}/delete" method="post" class="mt-2">
+                        <input type="hidden" name="_csrf" value="${csrfToken}"> <!-- CSRF Token -->
+                        <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm btn-animated" onclick="return confirm('Are you sure you want to delete this submission?');">Delete</button>
+                    </form>
+                  </div>
+                </div>
+              `;
+              submissionsList.insertAdjacentHTML('beforeend', submissionCard);
+            });
+          } else {
+            noSubmissionsMsg.classList.remove('hidden');
+          }
+        }
+  
+        function populateEditModal(assignment) {
+          document.getElementById('mentor-edit-assignment-id').value = assignment.id;
+          document.getElementById('mentor-edit-title').value = assignment.title;
+          document.getElementById('mentor-edit-description').value = assignment.description;
+  
+          const currentFileInfo = document.getElementById('mentor-current-file-info');
+          if (assignment.fileName) {
+            currentFileInfo.textContent = `Current file: ${assignment.fileName}`;
+          } else {
+            currentFileInfo.textContent = 'No file currently uploaded.';
+          }
+  
+          // Format dueDate for datetime-local input
+          if (assignment.dueDate) {
+            const date = new Date(assignment.dueDate);
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            document.getElementById('mentor-edit-dueDate').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+          } else {
+            document.getElementById('mentor-edit-dueDate').value = '';
+          }
+  
+          // Set the form action dynamically
+          const editForm = document.getElementById('mentor-edit-assignment-form');
+          editForm.action = `/mentor/assignment/${assignment.id}/edit`;
+        }
+        // Event listener for the Delete Assignment button
+      const deleteAssignmentBtn = document.getElementById('mentor-modal-delete-link');
+      if (deleteAssignmentBtn) {
+        deleteAssignmentBtn.addEventListener('click', async () => {
+          if (currentAssignment && confirm('Are you sure you want to delete this assignment? This action cannot be undone.')) {
+            const assignmentId = currentAssignment.id;
+            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+            try {
+              const response = await fetch(`/mentor/assignment/${assignmentId}/delete`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  [csrfHeader]: csrfToken
+                }
+              });
+
+              if (response.ok) {
+                alert('Assignment deleted successfully!');
+                if (viewModal) viewModal.classList.add('hidden');
+                location.reload(); // Reload the page to reflect the changes
+              } else {
+                alert('Failed to delete assignment.');
+              }
+            } catch (error) {
+              console.error('Error deleting assignment:', error);
+              alert('An error occurred while deleting the assignment.');
+            }
+          }
+        });
+      }
+    });
+
+    </script>
