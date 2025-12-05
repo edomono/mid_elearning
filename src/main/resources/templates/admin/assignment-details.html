@@ -21,10 +21,10 @@
                     <li th:each="submission : ${submissions}" class="border-b py-2">
                         <p>Student: <span th:text="${submission.user.username}"></span></p>
                         <p>Submitted: <span th:text="${#temporals.format(submission.uploadTime, 'dd-MM-yyyy HH:mm')}"></span></p>
-                        <p th:if="${submission.grade}">Grade: <span th:text="${submission.grade}"></span></p>
-                        <p th:if="${submission.comment}">Comment: <span th:text="${submission.comment}"></span></p>
+                        <p th:if="${submission.grade}">Grade: <span th:id="'grade-' + ${submission.id}" th:text="${submission.grade}"></span></p>
+                        <p th:if="${submission.comment}">Comment: <span th:id="'comment-' + ${submission.id}" th:text="${submission.comment}"></span></p>
                         <p>File: <a th:href="@{'/uploads/submissions/' + ${submission.id} + '/' + ${submission.fileName}}" th:text="${submission.fileName}"></a></p>
-                        <form th:action="@{'/admin/submission/' + ${submission.id} + '/grade'}" method="post" class="mt-2">
+                        <form th:data-submission-id="${submission.id}" class="grade-form mt-2">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                             <div class="flex items-center">
                                 <input type="text" name="grade" placeholder="Grade" class="border p-1 rounded w-24">
@@ -49,5 +49,53 @@
             <p>Assignment not found.</p>
         </div>
     </div>
+
+    <script>
+        document.querySelectorAll('.grade-form').forEach(form => {
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const submissionId = form.dataset.submissionId;
+                const gradeInput = form.querySelector('input[name="grade"]');
+                const commentInput = form.querySelector('input[name="comment"]');
+                const grade = gradeInput.value;
+                const comment = commentInput.value;
+                const csrfToken = form.querySelector('input[name="_csrf"]').value;
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+
+                try {
+                    const response = await fetch(`/admin/submission/${submissionId}/grade`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            [csrfHeader]: csrfToken
+                        },
+                        body: new URLSearchParams({
+                            grade: grade,
+                            comment: comment,
+                        })
+                    });
+
+                    if (response.ok) {
+                        const gradeSpan = document.getElementById(`grade-${submissionId}`);
+                        const commentSpan = document.getElementById(`comment-${submissionId}`);
+                        if (gradeSpan) gradeSpan.textContent = grade;
+                        if (commentSpan) commentSpan.textContent = comment;
+                        
+                        // Clear the input fields
+                        gradeInput.value = '';
+                        commentInput.value = '';
+                        
+                        // Optionally, show a success message to the user
+                        alert('Grade saved successfully!');
+                    } else {
+                        alert('Failed to save grade.');
+                    }
+                } catch (error) {
+                    console.error('Error saving grade:', error);
+                    alert('An error occurred while saving the grade.');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

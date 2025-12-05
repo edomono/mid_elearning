@@ -1,18 +1,17 @@
 package com.mid.intern.mid_elearning.controller;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.context.SecurityContextHolder;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
-import com.mid.intern.mid_elearning.dto.ParticipantRegistrationDto;
-import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,26 +19,23 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.mid.intern.mid_elearning.model.Announcement;
-import com.mid.intern.mid_elearning.model.Assignment;
+import com.mid.intern.mid_elearning.dto.ParticipantRegistrationDto;
+import com.mid.intern.mid_elearning.dto.StudentProgressDTO;
 import com.mid.intern.mid_elearning.model.Subject;
-import com.mid.intern.mid_elearning.model.Submission;
 import com.mid.intern.mid_elearning.model.User;
 import com.mid.intern.mid_elearning.service.AnnouncementService;
 import com.mid.intern.mid_elearning.service.AssignmentService;
 import com.mid.intern.mid_elearning.service.ForumService;
+import com.mid.intern.mid_elearning.service.StudentProgressService;
 import com.mid.intern.mid_elearning.service.SubjectService;
 import com.mid.intern.mid_elearning.service.SubmissionService;
 import com.mid.intern.mid_elearning.service.UserService;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.validation.Valid;
 
 @Controller
 @RequestMapping("/admin")
@@ -55,6 +51,7 @@ public class AdminDashboardController {
     private final SubmissionService submissionService;
     private final ForumService forumService;
     private final UserDetailsService userDetailsService;
+    private final StudentProgressService studentProgressService;
 
     public AdminDashboardController(
             SubjectService subjectService,
@@ -63,7 +60,8 @@ public class AdminDashboardController {
             AssignmentService assignmentService,
             SubmissionService submissionService,
             ForumService forumService,
-            UserDetailsService userDetailsService) {
+            UserDetailsService userDetailsService,
+            StudentProgressService studentProgressService) {
         this.subjectService = subjectService;
         this.userService = userService;
         this.announcementService = announcementService;
@@ -71,6 +69,7 @@ public class AdminDashboardController {
         this.submissionService = submissionService;
         this.forumService = forumService;
         this.userDetailsService = userDetailsService;
+        this.studentProgressService = studentProgressService;
     }
 
     // =============================================================
@@ -88,49 +87,6 @@ public class AdminDashboardController {
     model.addAttribute("announcements", announcementService.getAllAnnouncementsSorted());
     model.addAttribute("discussions", forumService.getAllDiscussions());
     return "admin/dashboard";
-    }
-
-    // =============================================================
-    // 📢 ANNOUNCEMENTS
-    // =============================================================
-    @PostMapping("/announcement/add")
-    public String addAnnouncement(@RequestParam("content") String content, Principal principal) {
-        if (content != null && !content.trim().isEmpty() && principal != null) {
-            User user = userService.getUserByUsername(principal.getName()).orElse(null);
-            if (user != null) {
-                Announcement a = new Announcement();
-                a.setContent(content.trim());
-                a.setUsername(user.getUsername());
-                a.setRole(user.getRole());
-                announcementService.saveAnnouncement(a);
-            }
-        }
-        return "redirect:/admin/dashboard";
-    }
-
-    @PostMapping("/announcement/{id}/edit")
-    @ResponseBody
-    public ResponseEntity<?> editAnnouncement(@PathVariable Long id, @RequestBody Announcement updated) {
-        Optional<Announcement> opt = announcementService.getAnnouncementById(id);
-        if (opt.isPresent()) {
-            Announcement a = opt.get();
-            if (updated.getContent() != null && !updated.getContent().trim().isEmpty()) {
-                a.setContent(updated.getContent().trim());
-                announcementService.saveAnnouncement(a);
-                return ResponseEntity.ok().build();
-            }
-        }
-        return ResponseEntity.badRequest().build();
-    }
-
-    @PostMapping("/announcement/{id}/delete")
-    @ResponseBody
-    public ResponseEntity<?> deleteAnnouncement(@PathVariable Long id) {
-        if (announcementService.existsById(id)) {
-            announcementService.deleteAnnouncement(id);
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
     }
 
     // =============================================================
@@ -163,45 +119,6 @@ public class AdminDashboardController {
     // 🧩 ASSIGNMENT MANAGEMENT
     // =============================================================
 
-
-    @GetMapping("/assignment/{id}")
-    public String viewAssignmentDetails(@PathVariable("id") Long assignmentId, Model model) {
-        Optional<Assignment> assignmentOpt = assignmentService.getAssignmentById(assignmentId);
-        if (assignmentOpt.isEmpty()) {
-            return "redirect:/admin/dashboard";
-        }
-        Assignment assignment = assignmentOpt.get();
-
-        List<Submission> submissions = submissionService.getSubmissionsByAssignment(assignment);
-        Optional<Subject> subjectOpt;
-        if (assignment.getSubject() != null) {
-            subjectOpt = subjectService.getSubjectById(assignment.getSubject().getId());
-        } else {
-            subjectOpt = Optional.empty();
-        }
-        if (subjectOpt.isEmpty()) {
-            logger.error("Subject not found for assignment ID: {}", assignmentId);
-            return "redirect:/admin/dashboard";
-        }
-        Subject subject = subjectOpt.get();
-
-                    model.addAttribute("assignment", Optional.of(assignment));        model.addAttribute("submissions", submissions);
-        model.addAttribute("announcements", announcementService.getAllAnnouncementsSorted());
-        model.addAttribute("discussions", forumService.getAllDiscussions());
-        model.addAttribute("subject", subject);
-        return "admin/assignment-details";
-    }
-
-    @PostMapping("/assignment/{id}/delete")
-    public String deleteAssignment(@PathVariable("id") Long id) {
-        Long subjectId = assignmentService.getAssignmentSubjectId(id);
-        assignmentService.deleteAssignment(id);
-        if (subjectId == null) {
-            logger.error("Subject ID not found for assignment ID: {}", id);
-            return "redirect:/admin/dashboard";
-        }
-        return "redirect:/admin/course/" + subjectId;
-    }
 
     // =============================================================
     // 🧾 GRADE MANAGEMENT
@@ -305,8 +222,24 @@ public class AdminDashboardController {
 
     @GetMapping("/participants")
     public String showParticipants(Model model) {
-        model.addAttribute("students", userService.getAllUsers());
+        java.util.List<User> students = userService.getAllUsers();
+        model.addAttribute("students", students);
+        // Log each participant's id and role to help debug template rendering
+        for (User s : students) {
+            logger.info("Participant row: id={} username={} role={}", s.getId(), s.getUsername(), s.getRole());
+        }
         return "admin/participants";
+    }
+
+    @GetMapping("/course/{courseId}/progress")
+    public String showStudentProgress(@PathVariable("courseId") Long courseId, Model model) {
+        Subject subject = subjectService.getSubjectById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found with ID: " + courseId));
+        List<StudentProgressDTO> studentProgress = studentProgressService.getStudentProgressForCourse(courseId);
+
+        model.addAttribute("subject", subject);
+        model.addAttribute("studentProgress", studentProgress);
+        return "admin/student-progress";
     }
 
 }

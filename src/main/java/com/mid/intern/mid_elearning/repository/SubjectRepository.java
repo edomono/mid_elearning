@@ -12,6 +12,8 @@ public interface SubjectRepository extends JpaRepository<Subject, Long> {
     boolean existsByName(String name);
     boolean existsByCode(String code);
 
-    // ✅ ambil subject berdasarkan id student
     List<Subject> findByStudents_Id(Long studentId);
+
+
+
 }

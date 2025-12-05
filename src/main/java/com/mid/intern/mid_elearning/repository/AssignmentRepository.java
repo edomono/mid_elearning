@@ -9,4 +9,5 @@ import com.mid.intern.mid_elearning.model.Subject;
 
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     List<Assignment> findBySubject(Subject subject);
+    List<Assignment> findBySubjectId(Long subjectId);
 }

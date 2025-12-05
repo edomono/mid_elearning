@@ -118,6 +118,7 @@ public class User {
             joinColumns = @jakarta.persistence.JoinColumn(name = "student_id"),
             inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "subject_id")
     )
+    @com.fasterxml.jackson.annotation.JsonIgnore // Add this to break circular dependency
     private java.util.Set<Subject> subjects = new java.util.HashSet<>();
 
     public java.util.Set<Subject> getSubjects() {

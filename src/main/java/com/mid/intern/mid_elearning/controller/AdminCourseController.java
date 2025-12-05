@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.mid.intern.mid_elearning.model.Assignment;
 import com.mid.intern.mid_elearning.model.Subject;
+import com.mid.intern.mid_elearning.service.AnnouncementService;
 import com.mid.intern.mid_elearning.service.AssignmentService;
+import com.mid.intern.mid_elearning.service.ForumService;
 import com.mid.intern.mid_elearning.service.SubjectService;
 import com.mid.intern.mid_elearning.service.UserService;
-import com.mid.intern.mid_elearning.service.AnnouncementService;
-import com.mid.intern.mid_elearning.service.ForumService;
 
 @Controller
 @RequestMapping("/admin/course")
@@ -51,6 +51,7 @@ public class AdminCourseController {
         model.addAttribute("user", userService.getCurrentUser());
         model.addAttribute("announcements", announcementService.getAllAnnouncementsSorted());
         model.addAttribute("discussions", forumService.getAllDiscussions());
+
         return "admin/course-details";
     }
 

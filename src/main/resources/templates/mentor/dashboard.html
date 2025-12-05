@@ -150,7 +150,9 @@
               </thead>
               <tbody>
               <tr th:each="student : ${students}" class="hover:bg-gray-50 transition">
-                <td class="px-4 py-2 border text-blue-600 font-medium" th:text="${student.username}">John Doe</td>
+                <td class="px-4 py-2 border text-blue-600 font-medium">
+                  <a th:href="@{'/mentor/attendance/' + ${student.id}}" class="hover:underline" th:text="${student.username}">John Doe</a>
+                </td>
                 <td class="px-4 py-2 border" th:text="${student.email}">john@example.com</td>
               </tr>
               </tbody>

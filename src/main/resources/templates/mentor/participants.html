@@ -6,20 +6,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-blue-50 min-h-screen flex flex-col">
-  <header class="bg-white border-b-4 border-green-400 flex justify-between items-center px-6 py-3 rounded-b-lg shadow-md">
-    <div class="flex items-center space-x-3">
-      <div th:insert="~{fragments/back-button :: backButton(defaultUrl='/mentor/dashboard')}"></div>
-      <img th:src="@{/static/images/header-logo.png}" alt="Logo" class="h-10">
-      <div>
-        <h1 class="text-lg font-bold text-green-700">Intelsysdata</h1>
-        <p class="text-xs text-gray-500 -mt-1">Business Intelligence Solution</p>
-      </div>
-    </div>
-    <nav class="space-x-6">
-      <a href="/mentor/dashboard" class="text-gray-600 hover:text-blue-600 font-medium">Subjects</a>
-      <a href="/mentor/participants" class="text-blue-600 font-bold border-b-2 border-blue-600 pb-1">Participants</a>
-    </nav>
-  </header>
+  <div th:replace="user/dashboard :: header"></div>
 
   <main class="flex-1 px-8 py-10">
     <div class="max-w-5xl mx-auto bg-white border-2 border-blue-400 rounded-2xl shadow-lg p-8">
@@ -34,7 +21,7 @@
         </thead>
         <tbody>
           <tr th:each="student : ${students}" class="border-t hover:bg-gray-50">
-            <td class="py-2 px-4" th:text="${student.username}"></td>
+            <td class="py-2 px-4"><a href="#" class="text-blue-600 hover:underline attendance-open-link" th:data-participant-id="${student.id}" th:text="${student.username}">Name</a></td>
             <td class="py-2 px-4" th:text="${student.email}"></td>
           </tr>
         </tbody>
@@ -45,5 +32,107 @@
   <footer class="bg-white border-t-4 border-green-400 mt-auto py-6 text-center text-gray-500">
     © 2025 MID E-Learning
   </footer>
+  <div th:insert="~{fragments/attendance-modal :: attendanceModal}"></div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const attendanceModal = document.getElementById('attendance-modal');
+      const closeAttendanceModalBtn = document.getElementById('close-attendance-modal-btn');
+      const attendanceCalendar = document.getElementById('attendance-calendar');
+      const attendanceOwner = document.getElementById('attendance-owner');
+      const attendanceMonthInfo = document.getElementById('attendance-month-info');
+      const attendancePrev = document.getElementById('attendance-prev');
+      const attendanceNext = document.getElementById('attendance-next');
+      const attendanceExportBtn = document.getElementById('attendance-export-btn');
+
+      let currentAttendanceOwnerId = null;
+      let currentYear = null;
+      let currentMonth = null;
+
+      function renderCalendar(presentDays, year, month) {
+        attendanceCalendar.innerHTML = '';
+        const ym = new Date(year, month - 1, 1);
+        const firstDay = new Date(ym.getFullYear(), ym.getMonth(), 1).getDay();
+        const daysInMonth = new Date(ym.getFullYear(), ym.getMonth() + 1, 0).getDate();
+        const offset = (firstDay + 6) % 7;
+        for (let i = 0; i < offset; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'p-3';
+          attendanceCalendar.appendChild(cell);
+        }
+        for (let d = 1; d <= daysInMonth; d++) {
+          const date = new Date(year, month -1, d);
+          const iso = date.toISOString().slice(0,10);
+          const cell = document.createElement('div');
+          const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+          cell.className = 'p-3 border rounded';
+          if (isWeekend) {
+            cell.classList.add('bg-gray-100', 'text-gray-400');
+          } else if (presentDays.includes(iso)) {
+            cell.classList.add('bg-green-200', 'text-green-800');
+          } else {
+            cell.classList.add('bg-red-200', 'text-red-800');
+          }
+          cell.innerText = d;
+          attendanceCalendar.appendChild(cell);
+        }
+      }
+
+      function fetchAndShowAttendanceModal(id, isAdmin, year, month) {
+        currentAttendanceOwnerId = id;
+        let url = `/api/attendance/${id}`;
+        if (year && month) {
+          url += `?year=${year}&month=${month}`;
+        }
+        fetch(url)
+          .then(r => r.ok ? r.json() : Promise.reject('Failed to fetch'))
+          .then(payload => {
+            attendanceOwner.innerText = payload.ownerUsername || ('User ' + payload.ownerId);
+            currentYear = payload.year;
+            currentMonth = payload.month;
+            attendanceMonthInfo.innerText = `${currentMonth}/${currentYear}`;
+            renderCalendar(payload.presentDays || [], currentYear, currentMonth);
+            attendanceExportBtn.href = isAdmin ? `/admin/attendance/${id}/export?year=${currentYear}&month=${currentMonth}` : `/mentor/attendance/${id}/export?year=${currentYear}&month=${currentMonth}`;
+            attendanceModal.classList.remove('hidden');
+          })
+          .catch(err => {
+            console.error('Error loading attendance:', err);
+            alert('Gagal memuat data absensi.');
+          });
+      }
+
+      if (closeAttendanceModalBtn) {
+        closeAttendanceModalBtn.addEventListener('click', () => attendanceModal.classList.add('hidden'));
+      }
+
+      if (attendancePrev) {
+        attendancePrev.addEventListener('click', () => {
+          if (!currentYear || !currentMonth || !currentAttendanceOwnerId) return;
+          let y = currentYear;
+          let m = currentMonth - 1;
+          if (m < 1) { m = 12; y--; }
+          fetchAndShowAttendanceModal(currentAttendanceOwnerId, false, y, m);
+        });
+      }
+
+      if (attendanceNext) {
+        attendanceNext.addEventListener('click', () => {
+          if (!currentYear || !currentMonth || !currentAttendanceOwnerId) return;
+          let y = currentYear;
+          let m = currentMonth + 1;
+          if (m > 12) { m = 1; y++; }
+          fetchAndShowAttendanceModal(currentAttendanceOwnerId, false, y, m);
+        });
+      }
+
+      document.body.addEventListener('click', function(e) {
+        const el = e.target;
+        if (el.classList && el.classList.contains('attendance-open-link')) {
+          e.preventDefault();
+          const id = el.dataset.participantId;
+          fetchAndShowAttendanceModal(id, false);
+        }
+      });
+    });
+  </script>
 </body>
 </html>

@@ -1,22 +1,30 @@
+
 package com.mid.intern.mid_elearning.controller;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.Map;
+import java.util.HashMap;
 
 import com.mid.intern.mid_elearning.model.Assignment;
 import com.mid.intern.mid_elearning.service.AssignmentService;
 import com.mid.intern.mid_elearning.service.SubmissionService;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.ui.Model;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 
 @Controller
 @RequestMapping("/admin")
@@ -72,19 +80,21 @@ public class AdminAssignmentController {
     }
 
     @PostMapping("/submission/{id}/grade")
-    public String gradeSubmission(@PathVariable("id") Long submissionId,
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> gradeSubmission(@PathVariable("id") Long submissionId,
                                 @RequestParam("grade") String grade,
                                 @RequestParam("comment") String comment) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null) {
-            System.out.println("Authenticated user: " + authentication.getName());
-            System.out.println("Authorities: " + authentication.getAuthorities());
-        } else {
-            System.out.println("No authentication found in SecurityContextHolder.");
+        Map<String, Object> response = new HashMap<>();
+        try {
+            submissionService.gradeSubmission(submissionId, grade, comment);
+            response.put("success", true);
+            response.put("message", "Grade saved successfully!");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error saving grade: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        submissionService.gradeSubmission(submissionId, grade, comment);
-        Long assignmentId = submissionService.getAssignmentIdBySubmission(submissionId);
-        return "redirect:/admin/course/" + assignmentId;
     }
 
     @PostMapping("/submission/{id}/delete")

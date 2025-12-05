@@ -37,7 +37,7 @@ public class Submission {
     private LocalDateTime uploadTime;
 
     // === Penilaian ===
-    private String grade;
+    private Double grade;
     private String comment;
 
     public Submission() {
@@ -62,8 +62,8 @@ public class Submission {
     public LocalDateTime getUploadTime() { return uploadTime; }
     public void setUploadTime(LocalDateTime uploadTime) { this.uploadTime = uploadTime; }
 
-    public String getGrade() { return grade; }
-    public void setGrade(String grade) { this.grade = grade; }
+    public Double getGrade() { return grade; }
+    public void setGrade(Double grade) { this.grade = grade; }
 
     public String getComment() { return comment; }
     public void setComment(String comment) { this.comment = comment; }

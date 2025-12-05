@@ -1,0 +1,30 @@
+<div th:fragment="attendanceModal">
+  <div id="attendance-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col border-4 border-blue-400">
+      <div class="flex justify-between items-center p-4 border-b bg-blue-50 rounded-t-xl">
+        <h2 id="attendance-modal-title" class="text-2xl font-bold text-blue-700">Detail Absensi</h2>
+        <button id="close-attendance-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h3 id="attendance-owner" class="text-lg font-semibold text-blue-800">Username</h3>
+            <p id="attendance-month-info" class="text-sm text-gray-500">Month / Year</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <a id="attendance-export-btn" href="#" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 text-sm">Export CSV</a>
+            <button id="attendance-prev" class="px-3 py-1 bg-white border rounded">&larr; Prev</button>
+            <button id="attendance-next" class="px-3 py-1 bg-white border">Next &rarr;</button>
+          </div>
+        </div>
+
+        <div id="attendance-calendar" class="grid grid-cols-7 gap-2 text-center">
+          <!-- calendar cells injected here -->
+        </div>
+
+        <p class="text-xs text-gray-500 mt-4">Warna hijau = sudah absen; merah = tidak absen. Sabtu & Minggu dikecualikan.</p>
+      </div>
+    </div>
+  </div>
+</div>

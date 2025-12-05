@@ -50,7 +50,13 @@ public class SubmissionService {
     public void gradeSubmission(Long submissionId, String grade, String comment) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
-        submission.setGrade(grade);
+        if (grade != null && !grade.trim().isEmpty()) {
+            try {
+                submission.setGrade(Double.parseDouble(grade.trim()));
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid grade format: " + grade);
+            }
+        }
         submission.setComment(comment);
         submissionRepository.save(submission);
     }
@@ -68,7 +74,14 @@ public class SubmissionService {
     public void updateGradeAndComment(Long submissionId, String grade, String comment) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
-        submission.setGrade(grade);
+        if (grade != null && !grade.isBlank()) {
+            try {
+                Double gradeValue = Double.parseDouble(grade.trim());
+                submission.setGrade(gradeValue);
+            } catch (NumberFormatException e) {
+                System.err.println("❌ Invalid grade format for submission " + submissionId + ": " + grade);
+            }
+        }
         submission.setComment(comment);
         submissionRepository.save(submission);
     }

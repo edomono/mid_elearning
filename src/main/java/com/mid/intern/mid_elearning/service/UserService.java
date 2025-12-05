@@ -9,12 +9,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.mid.intern.mid_elearning.model.User;
-import com.mid.intern.mid_elearning.repository.UserRepository;
-import com.mid.intern.mid_elearning.repository.DiscussionRepository;
-import com.mid.intern.mid_elearning.repository.SubmissionRepository; // Import SubmissionRepository
-import com.mid.intern.mid_elearning.dto.UserRegistrationDto;
 import com.mid.intern.mid_elearning.dto.ParticipantRegistrationDto;
+import com.mid.intern.mid_elearning.dto.UserRegistrationDto;
+import com.mid.intern.mid_elearning.model.User;
+import com.mid.intern.mid_elearning.repository.DiscussionRepository;
+import com.mid.intern.mid_elearning.repository.SubjectRepository; // Import SubmissionRepository
+import com.mid.intern.mid_elearning.repository.SubmissionRepository; // Import SubjectRepository
+import com.mid.intern.mid_elearning.repository.UserRepository;
 
 @Service
 public class UserService {
@@ -27,6 +28,9 @@ public class UserService {
 
     @Autowired
     private DiscussionRepository discussionRepository;
+
+    @Autowired
+    private SubjectRepository subjectRepository; // Inject SubjectRepository
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -58,6 +62,8 @@ public class UserService {
         String username = authentication.getName();
         return getUserByUsername(username).orElse(null);
     }
+
+
 
     // =============================================================
     // ✅ EXISTENCE CHECK

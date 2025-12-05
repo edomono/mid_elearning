@@ -1,7 +1,11 @@
 package com.mid.intern.mid_elearning.controller;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
+import org.springframework.http.HttpStatus;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -24,6 +28,8 @@ import com.mid.intern.mid_elearning.service.SubjectService;
 import com.mid.intern.mid_elearning.service.AnnouncementService;
 import com.mid.intern.mid_elearning.service.ForumService;
 import com.mid.intern.mid_elearning.service.SubmissionService;
+import com.mid.intern.mid_elearning.service.StudentProgressService; // Import StudentProgressService
+import com.mid.intern.mid_elearning.dto.StudentProgressDTO; // Import StudentProgressDTO
 
 @Controller
 @RequestMapping("/mentor")
@@ -33,15 +39,16 @@ public class MentorAssignmentController {
     private final SubjectService subjectService;
     private final AnnouncementService announcementService;
     private final ForumService forumService;
-
     private final SubmissionService submissionService;
+    private final StudentProgressService studentProgressService; // Inject StudentProgressService
 
-    public MentorAssignmentController(AssignmentService assignmentService, SubjectService subjectService, AnnouncementService announcementService, ForumService forumService, SubmissionService submissionService) {
+    public MentorAssignmentController(AssignmentService assignmentService, SubjectService subjectService, AnnouncementService announcementService, ForumService forumService, SubmissionService submissionService, StudentProgressService studentProgressService) {
         this.assignmentService = assignmentService;
         this.subjectService = subjectService;
         this.announcementService = announcementService;
         this.forumService = forumService;
         this.submissionService = submissionService;
+        this.studentProgressService = studentProgressService; // Initialize StudentProgressService
     }
 
     // ==============================================================
@@ -167,21 +174,25 @@ public class MentorAssignmentController {
     // 📝 UPDATE GRADE (mentor memberi nilai student)
     // ==============================================================
     @PostMapping("/submission/{submissionId}/grade")
-    public String gradeSubmission(
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> gradeSubmission(
             @PathVariable("submissionId") Long submissionId,
             @RequestParam("grade") String grade,
             @RequestParam(value = "comment", required = false) String comment
     ) {
-        submissionService.gradeSubmission(submissionId, grade, comment);
-        System.out.println("✅ Submission " + submissionId + " dinilai: " + grade);
-        // after grading, redirect to the assignment details page for this submission's assignment
-        Long assignmentId = submissionService.getAssignmentIdBySubmission(submissionId);
-        if (assignmentId == null) {
-            // fallback to mentor dashboard if mapping failed
-            System.err.println("⚠️ Unable to determine assignment for submission: " + submissionId);
-            return "redirect:/mentor/dashboard";
+        Map<String, Object> response = new HashMap<>();
+        try {
+            submissionService.gradeSubmission(submissionId, grade, comment);
+            System.out.println("✅ Submission " + submissionId + " dinilai: " + grade);
+            response.put("success", true);
+            response.put("message", "Grade saved successfully!");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("❌ Error grading submission " + submissionId + ": " + e.getMessage());
+            response.put("success", false);
+            response.put("message", "Error saving grade.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return "redirect:/mentor/assignment/" + assignmentId;
     }
 
     @PostMapping("/submission/{id}/delete")
@@ -206,5 +217,12 @@ public class MentorAssignmentController {
         System.out.println("🗑️ Assignment " + id + " berhasil dihapus");
 
         return "redirect:/mentor/course/" + subjectId;
+    }
+
+    // New API endpoint for student progress
+    @GetMapping("/api/courses/{courseId}/student-progress")
+    @ResponseBody
+    public List<StudentProgressDTO> getStudentProgress(@PathVariable("courseId") Long courseId) {
+        return studentProgressService.getStudentProgressForCourse(courseId);
     }
 }

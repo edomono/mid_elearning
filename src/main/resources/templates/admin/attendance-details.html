@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Attendance - Detail</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0074cc] min-h-screen flex flex-col">
+  <div th:replace="user/dashboard :: header"></div>
+
+  <main class="flex-1 flex justify-center items-start py-10 px-6">
+    <div class="bg-white w-full max-w-4xl p-6 rounded-2xl border-2 border-blue-400 shadow-md">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h1 class="text-xl font-bold text-blue-700">Detail Absensi: <span th:text="${participant.username}">User</span></h1>
+          <p class="text-sm text-gray-500">Bulan: <span th:text="${month}"></span> / <span th:text="${year}"></span></p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <a th:href="${exportLink}" class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-500">Export CSV</a>
+          <div class="px-3 py-1 rounded bg-gray-100 text-gray-700">Persentase: <span th:text="${attendancePercentage} + '%'">0%</span></div>
+          <a href="/admin/participants" class="text-sm text-gray-600 hover:underline">Back to participants</a>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex gap-2">
+          <a th:href="${prevLink}" class="px-3 py-1 bg-white border rounded">&larr; Prev</a>
+          <a th:href="${nextLink}" class="px-3 py-1 bg-white border rounded">Next &rarr;</a>
+        </div>
+      </div>
+
+      <div id="calendar" class="grid grid-cols-7 gap-2 text-center">
+        <!-- Calendar will be rendered here -->
+      </div>
+
+      <p class="text-xs text-gray-500 mt-4">Warna hijau = sudah absen; merah = tidak absen. Sabtu & Minggu dikecualikan.</p>
+    </div>
+  </main>
+
+  <div th:replace="user/dashboard :: footer"></div>
+
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    const presentDays = /*[[${presentDays}]]*/ [];
+    const year = /*[[${year}]]*/ 0;
+    const month = /*[[${month}]]*/ 0; // 1-based month
+
+    function buildCalendar(y, m) {
+      const container = document.getElementById('calendar');
+      container.innerHTML = '';
+      const dt = new Date(y, m - 1, 1);
+      const firstDayWeekday = dt.getDay(); // 0 Sun .. 6 Sat
+
+      const daysInMonth = new Date(y, m, 0).getDate();
+
+      // Header (days)
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      for (let d of days) {
+        const el = document.createElement('div');
+        el.className = 'font-semibold text-sm text-gray-600';
+        el.textContent = d;
+        container.appendChild(el);
+      }
+
+      // blank slots before month start
+      for (let i = 0; i < firstDayWeekday; i++) {
+        const el = document.createElement('div');
+        el.className = 'text-sm p-2';
+        container.appendChild(el);
+      }
+
+      const today = new Date();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(y, m - 1, d);
+        const cell = document.createElement('div');
+        cell.className = 'p-3 rounded-lg border text-sm flex flex-col items-center justify-center';
+
+        const dayNum = document.createElement('div');
+        dayNum.className = 'text-xs text-gray-700';
+        dayNum.textContent = d;
+        cell.appendChild(dayNum);
+
+        const iso = date.toISOString().slice(0,10);
+        const isWeekend = (date.getDay() === 0 || date.getDay() === 6);
+
+        // only consider days up to today
+        const showAbsent = date <= today && !isWeekend;
+
+        if (presentDays && presentDays.indexOf(iso) !== -1) {
+          cell.classList.add('bg-green-100','border-green-300');
+        } else if (showAbsent) {
+          cell.classList.add('bg-red-100','border-red-300');
+        } else if (isWeekend) {
+          cell.classList.add('bg-gray-50','border-gray-100','text-gray-400');
+        } else {
+          cell.classList.add('bg-white','border-gray-200');
+        }
+
+        container.appendChild(cell);
+      }
+    }
+
+    // Normalize presentDays to ISO yyyy-mm-dd strings
+    for (let i=0;i<presentDays.length;i++) {
+      // presentDays coming from Java LocalDate list will render like [2025-12-01,...]
+      // ensure strings
+      presentDays[i] = ('' + presentDays[i]);
+    }
+
+    buildCalendar(year, month);
+    /*]]>*/
+  </script>
+</body>
+</html>

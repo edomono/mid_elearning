@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mid.intern.mid_elearning.model.Subject;
 import com.mid.intern.mid_elearning.model.User;
 import com.mid.intern.mid_elearning.repository.SubjectRepository;
-import com.mid.intern.mid_elearning.service.AssignmentService;
 
 @Service
 public class SubjectService {

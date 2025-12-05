@@ -25,7 +25,7 @@ public class Assignment {
     private String fileName;
     private String filePath;
 
-    private String grade;
+    private Double grade;
     private String comment;
 
     private LocalDateTime dueDate;
@@ -56,8 +56,8 @@ public class Assignment {
     public String getFilePath() { return filePath; }
     public void setFilePath(String filePath) { this.filePath = filePath; }
 
-    public String getGrade() { return grade; }
-    public void setGrade(String grade) { this.grade = grade; }
+    public Double getGrade() { return grade; }
+    public void setGrade(Double grade) { this.grade = grade; }
 
     public String getComment() { return comment; }
     public void setComment(String comment) { this.comment = comment; }

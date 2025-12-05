@@ -19,20 +19,20 @@
     <form method="post" th:action="@{/user/profile}" class="space-y-4">
 
       <div>
-        <label class="text-sm font-semibold">Full Name</label>
-        <input type="text" name="username" th:value="${user.username}"
+        <label for="profile-username" class="text-sm font-semibold">Full Name</label>
+        <input id="profile-username" type="text" name="username" th:value="${user.username}" autocomplete="username"
                class="w-full border rounded px-4 py-2 text-sm">
       </div>
 
       <div>
-        <label class="text-sm font-semibold">Email</label>
-        <input type="email" name="email" th:value="${user.email}" readonly
+        <label for="profile-email" class="text-sm font-semibold">Email</label>
+        <input id="profile-email" type="email" name="email" th:value="${user.email}" readonly autocomplete="email"
                class="w-full border rounded px-4 py-2 text-sm bg-gray-100">
       </div>
 
       <div>
-        <label class="text-sm font-semibold">New Password (optional)</label>
-        <input type="password" name="password"
+        <label for="profile-password" class="text-sm font-semibold">New Password (optional)</label>
+        <input id="profile-password" type="password" name="password" autocomplete="new-password"
                class="w-full border rounded px-4 py-2 text-sm">
       </div>
 

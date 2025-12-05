@@ -154,7 +154,7 @@ public class AssignmentService {
 
         } catch (IOException e) {
             System.err.println("❌ Gagal menyimpan file assignment: " + e.getMessage());
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.err.println("❌ Gagal memperbarui assignment: " + e.getMessage());
             e.printStackTrace();
         }
@@ -165,7 +165,14 @@ public class AssignmentService {
     // =============================================================
     public void updateGradeAndComment(Long submissionId, String grade, String comment) {
         submissionRepository.findById(submissionId).ifPresent(submission -> {
-            if (grade != null && !grade.isBlank()) submission.setGrade(grade.trim());
+            if (grade != null && !grade.isBlank()) {
+                try {
+                    Double gradeValue = Double.parseDouble(grade.trim());
+                    submission.setGrade(gradeValue);
+                } catch (NumberFormatException e) {
+                    System.err.println("❌ Invalid grade format for submission " + submissionId + ": " + grade);
+                }
+            }
             if (comment != null && !comment.isBlank()) submission.setComment(comment.trim());
             submissionRepository.save(submission);
             System.out.println("✏️ Submission " + submissionId + " dinilai dengan grade " + grade);

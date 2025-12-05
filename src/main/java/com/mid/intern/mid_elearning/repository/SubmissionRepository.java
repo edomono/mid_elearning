@@ -14,4 +14,5 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> findByAssignment(Assignment assignment);
     List<Submission> findByAssignmentAndUser(Assignment assignment, User user);
     List<Submission> findByUser(User user);
+    Optional<Submission> findByAssignmentIdAndUserId(Long assignmentId, Long userId);
 }
