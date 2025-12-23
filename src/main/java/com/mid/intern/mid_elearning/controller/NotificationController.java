@@ -1,17 +1,24 @@
 package com.mid.intern.mid_elearning.controller;
 
-import com.mid.intern.mid_elearning.model.Notification;
-import com.mid.intern.mid_elearning.model.User;
-import com.mid.intern.mid_elearning.repository.UserRepository;
-import com.mid.intern.mid_elearning.service.NotificationService;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
+import com.mid.intern.mid_elearning.dto.NotificationDTO;
+import com.mid.intern.mid_elearning.model.Notification;
+import com.mid.intern.mid_elearning.model.User;
+import com.mid.intern.mid_elearning.repository.UserRepository;
+import com.mid.intern.mid_elearning.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -65,20 +72,26 @@ public class NotificationController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Notification>> getUserNotifications(
+    public ResponseEntity<List<NotificationDTO>> getUserNotifications(
             @AuthenticationPrincipal UserDetails userDetails) {
         System.out.println("DEBUG: Entering getUserNotifications method.");
         Long userId = getAuthenticatedUserId(userDetails);
         List<Notification> notifications = notificationService.getNotificationsForUser(userId);
-        return ResponseEntity.ok(notifications);
+        List<NotificationDTO> dtos = notifications.stream()
+                .map(n -> new NotificationDTO(n.getId(), n.getMessage(), n.isRead(), n.getTimestamp(), n.getSender() == null ? null : n.getSender().getUsername()))
+                .toList();
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/unread")
-    public ResponseEntity<List<Notification>> getUnreadUserNotifications(
+    public ResponseEntity<List<NotificationDTO>> getUnreadUserNotifications(
             @AuthenticationPrincipal UserDetails userDetails) {
         Long userId = getAuthenticatedUserId(userDetails);
         List<Notification> unreadNotifications = notificationService.getUnreadNotificationsForUser(userId);
-        return ResponseEntity.ok(unreadNotifications);
+        List<NotificationDTO> dtos = unreadNotifications.stream()
+                .map(n -> new NotificationDTO(n.getId(), n.getMessage(), n.isRead(), n.getTimestamp(), n.getSender() == null ? null : n.getSender().getUsername()))
+                .toList();
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/unread/count")

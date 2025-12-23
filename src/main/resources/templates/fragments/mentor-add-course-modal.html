@@ -9,9 +9,14 @@
 
         <!-- Modal Body -->
         <div class="p-6 overflow-y-auto">
-            <!-- Error Message -->
-            <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
-                <p th:text="${error}"></p>
+            <!-- AJAX Success Message Container -->
+            <div id="add-course-success" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4">
+                <p></p>
+            </div>
+            
+            <!-- AJAX Error Message Container -->
+            <div id="add-course-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+                <p></p>
             </div>
 
             <!-- FORM: Mentor Add Course -->

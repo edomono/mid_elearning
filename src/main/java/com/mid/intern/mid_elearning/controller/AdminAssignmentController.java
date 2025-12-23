@@ -2,12 +2,13 @@
 package com.mid.intern.mid_elearning.controller;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -19,8 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.Map;
-import java.util.HashMap;
 
 import com.mid.intern.mid_elearning.model.Assignment;
 import com.mid.intern.mid_elearning.service.AssignmentService;
@@ -76,7 +75,12 @@ public class AdminAssignmentController {
 
         assignment.setDueDate(dueDate);
         assignmentService.updateAssignment(assignmentId, assignment, file);
-        return "redirect:/admin/dashboard";
+        // After updating the assignment, redirect back to the course page (keep context for the admin)
+        Long subjectId = assignmentService.getAssignmentSubjectId(assignmentId);
+        if (subjectId == null) {
+            return "redirect:/admin/dashboard";
+        }
+        return "redirect:/admin/course/" + subjectId;
     }
 
     @PostMapping("/submission/{id}/grade")
@@ -102,5 +106,17 @@ public class AdminAssignmentController {
         Long assignmentId = submissionService.getAssignmentIdBySubmission(submissionId);
         submissionService.deleteSubmissionById(submissionId);
         return "redirect:/admin/assignment/" + assignmentId;
+    }
+
+    @PostMapping("/assignment/{id}/delete")
+    public String deleteAssignment(@PathVariable("id") Long assignmentId) {
+        Long subjectId = assignmentService.getAssignmentSubjectId(assignmentId);
+        if (subjectId == null) {
+            System.err.println("⚠️ Subject ID not found for assignment " + assignmentId);
+            return "redirect:/admin/dashboard";
+        }
+        assignmentService.deleteAssignment(assignmentId);
+        System.out.println("🗑️ Assignment " + assignmentId + " berhasil dihapus");
+        return "redirect:/admin/course/" + subjectId;
     }
 }

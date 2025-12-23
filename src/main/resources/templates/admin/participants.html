@@ -32,10 +32,10 @@
           <tr th:each="student : ${students}" class="border-t hover:bg-gray-50">
             <td class="py-2 px-4">
               <a href="#" class="text-blue-600 hover:underline font-medium attendance-open-link" th:data-participant-id="${student.id}" th:text="${student.username}"></a>
-              <button type="button" title="View Attendance" class="ml-3 px-2 py-1 bg-blue-500 text-white rounded text-sm inline-view-attendance-btn" th:data-participant-id="${student.id}">Lihat</button>
+              <button th:if="${#strings.matches(student.role, '(?i).*USER.*')}" type="button" title="View Attendance" class="ml-3 px-2 py-1 bg-blue-500 text-white rounded text-sm inline-view-attendance-btn" th:data-participant-id="${student.id}">Lihat</button>
             </td>
             <td class="py-2 px-4" th:text="${student.email}"></td>
-            <td class="py-2 px-4"> <!-- New column for actions -->
+            <td class="py-2 px-4">
               <a href="#" class="text-sm text-gray-600 view-participant-btn" th:data-participant-id="${student.id}">Details</a>
             </td>
           </tr>

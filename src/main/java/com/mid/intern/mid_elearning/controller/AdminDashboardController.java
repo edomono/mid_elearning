@@ -2,10 +2,13 @@ package com.mid.intern.mid_elearning.controller;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,12 +24,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.mid.intern.mid_elearning.dto.ParticipantRegistrationDto;
 import com.mid.intern.mid_elearning.dto.StudentProgressDTO;
 import com.mid.intern.mid_elearning.model.Subject;
 import com.mid.intern.mid_elearning.model.User;
+import com.mid.intern.mid_elearning.repository.UserRepository;
 import com.mid.intern.mid_elearning.service.AnnouncementService;
 import com.mid.intern.mid_elearning.service.AssignmentService;
 import com.mid.intern.mid_elearning.service.ForumService;
@@ -52,6 +56,7 @@ public class AdminDashboardController {
     private final ForumService forumService;
     private final UserDetailsService userDetailsService;
     private final StudentProgressService studentProgressService;
+    private final UserRepository userRepository;
 
     public AdminDashboardController(
             SubjectService subjectService,
@@ -61,7 +66,8 @@ public class AdminDashboardController {
             SubmissionService submissionService,
             ForumService forumService,
             UserDetailsService userDetailsService,
-            StudentProgressService studentProgressService) {
+            StudentProgressService studentProgressService,
+            UserRepository userRepository) { // 💉 Inject UserRepository
         this.subjectService = subjectService;
         this.userService = userService;
         this.announcementService = announcementService;
@@ -70,6 +76,7 @@ public class AdminDashboardController {
         this.forumService = forumService;
         this.userDetailsService = userDetailsService;
         this.studentProgressService = studentProgressService;
+        this.userRepository = userRepository; // 💉 Assign UserRepository
     }
 
     // =============================================================
@@ -80,13 +87,13 @@ public class AdminDashboardController {
         if (principal != null) {
             userService.getUserByUsername(principal.getName()).ifPresent(user -> model.addAttribute("user", user));
         }
-    model.addAttribute("subjects", subjectService.getAllSubjects());
-    model.addAttribute("participants", userService.getAllUsers());
-    model.addAttribute("participant", new ParticipantRegistrationDto()); // Use DTO here
-    model.addAttribute("waitingApprovals", userService.getPendingUsers());
-    model.addAttribute("announcements", announcementService.getAllAnnouncementsSorted());
-    model.addAttribute("discussions", forumService.getAllDiscussions());
-    return "admin/dashboard";
+		model.addAttribute("subjects", subjectService.getAllSubjects());
+		model.addAttribute("participants", userService.getAllUsers());
+		model.addAttribute("participant", new ParticipantRegistrationDto()); // Use DTO here
+		model.addAttribute("waitingApprovals", userService.getPendingUsers());
+		model.addAttribute("announcements", announcementService.getAllAnnouncementsSorted());
+		model.addAttribute("discussions", forumService.getAllDiscussions());
+		return "admin/dashboard";
     }
 
     // =============================================================
@@ -99,20 +106,21 @@ public class AdminDashboardController {
     }
 
     @PostMapping({"/add-course", "/course/add"})
-    public String addCourse(@ModelAttribute("subject") Subject subject, Model model) {
+    @ResponseBody
+    public ResponseEntity<?> addCourse(@ModelAttribute Subject subject) {
         if (subject.getName() != null) subject.setName(subject.getName().trim());
         if (subject.getDescription() != null) subject.setDescription(subject.getDescription().trim());
 
         if (subjectService.existsByName(subject.getName())) {
-            model.addAttribute("error", "Course name already exists!");
-            model.addAttribute("subject", subject);
-            return "admin/add-course";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("status", "error", "message", "Course name already exists!"));
         }
 
         long count = subjectService.getAllSubjects().size() + 1;
         subject.setCode(String.format("C%03d", count));
         subjectService.saveSubject(subject);
-        return "redirect:/admin/dashboard";
+        
+        return ResponseEntity.ok(Map.of("status", "success", "message", "Course added successfully!"));
     }
 
     // =============================================================
@@ -146,25 +154,39 @@ public class AdminDashboardController {
     }
 
     @PostMapping("/participant/add")
-    public String addParticipant(@Valid @ModelAttribute("participant") ParticipantRegistrationDto participantDto,
-                               BindingResult result,
-                               RedirectAttributes redirectAttributes,
-                               Model model) {
+    @ResponseBody //  dönüş türünü JSON olarak ayarla
+    public ResponseEntity<Map<String, Object>> addParticipant(
+            @Valid @ModelAttribute("participant") ParticipantRegistrationDto participantDto,
+            BindingResult result) {
 
         if (result.hasErrors()) {
-            return "admin/add-participant";
+            // Spring'in temel doğrulama hatalarını işle
+            String errorMessage = result.getFieldErrors().stream()
+                    .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                    .findFirst()
+                    .orElse("Invalid data provided.");
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", errorMessage));
+        }
+
+        // Mevcut kullanıcı adı veya e-postayı kontrol et
+        if (userRepository.findByUsername(participantDto.getUsername()).isPresent()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("status", "error", "message", "Username already exists!"));
+        }
+
+        if (userRepository.findByEmail(participantDto.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("status", "error", "message", "Email already exists!"));
         }
 
         try {
             userService.registerParticipant(participantDto);
-            redirectAttributes.addFlashAttribute("success", "Participant added successfully!");
-            return "redirect:/admin/dashboard";
-        } catch (IllegalStateException e) {
-            result.rejectValue("email", "error.participantDto", e.getMessage());
-            return "admin/add-participant";
+            return ResponseEntity.ok(Map.of("status", "success", "message", "Participant added successfully!"));
         } catch (Exception e) {
-            model.addAttribute("error", "Error adding participant: " + e.getMessage());
-            return "admin/add-participant";
+            // Diğer beklenmedik istisnaları yakala
+            logger.error("Error adding participant: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("status", "error", "message", "An unexpected error occurred: " + e.getMessage()));
         }
     }
 
@@ -222,12 +244,7 @@ public class AdminDashboardController {
 
     @GetMapping("/participants")
     public String showParticipants(Model model) {
-        java.util.List<User> students = userService.getAllUsers();
-        model.addAttribute("students", students);
-        // Log each participant's id and role to help debug template rendering
-        for (User s : students) {
-            logger.info("Participant row: id={} username={} role={}", s.getId(), s.getUsername(), s.getRole());
-        }
+        model.addAttribute("students", userService.getAllUsers());
         return "admin/participants";
     }
 

@@ -67,6 +67,11 @@
 
 <body class="bg-[#0074cc] min-h-screen flex flex-col">
 
+  <!-- Success Toast -->
+  <div id="success-toast" class="hidden fixed top-5 right-5 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in z-50">
+    <p>Course added successfully!</p>
+  </div>
+
   <!-- ===== HEADER ===== -->
   <header class="bg-white border-b-4 border-green-400 flex justify-between items-center px-6 py-3 rounded-b-lg shadow-md">
     <div class="flex items-center space-x-3">
@@ -234,13 +239,13 @@
             </div>
           </div>
           <form th:action="@{/forum/send}" method="post" class="mt-3 flex gap-2">
-            <input name="message" required maxlength="500" placeholder="Write a message..." class="flex-1 border rounded-lg px-3 py-2 text-sm" />
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <input id="forum-message-mentor" name="message" required maxlength="500" placeholder="Write a message..." autocomplete="off" class="flex-1 border rounded-lg px-3 py-2 text-sm" />
             <button type="submit" class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm">Send</button>
           </form>
         </div>
       </div>
     </div>
-  </main>
   </main>
 
   <!-- ===== FOOTER ===== -->
@@ -443,6 +448,65 @@
         }
       }
     }
+
+    function showToast(message) {
+      const toast = document.getElementById('success-toast');
+      if (toast) {
+          toast.querySelector('p').textContent = message;
+          toast.classList.remove('hidden');
+          setTimeout(() => {
+              toast.classList.add('hidden');
+          }, 3000); // Hide after 3 seconds
+      }
+    }
+
+    // === AJAX for Add Course Modal (Event Delegation) ===
+    document.addEventListener('submit', async (event) => {
+        if (event.target && event.target.id === 'add-course-form') {
+            event.preventDefault();
+
+            const addCourseForm = event.target;
+            const errorDiv = document.getElementById('add-course-error');
+            const errorParagraph = errorDiv.querySelector('p');
+            const successDiv = document.getElementById('add-course-success');
+            const successParagraph = successDiv.querySelector('p');
+
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+
+            const formData = new FormData(addCourseForm);
+            const actionUrl = addCourseForm.getAttribute('action');
+
+            try {
+                const response = await fetch(actionUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    successParagraph.textContent = data.message || 'Course added successfully!';
+                    successDiv.classList.remove('hidden');
+                    addCourseForm.reset(); // Clear the form fields
+
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500); // Reload to show the new course
+                } else {
+                    if (data.message) {
+                        errorParagraph.textContent = data.message;
+                        errorDiv.classList.remove('hidden');
+                    }
+                }
+            } catch (error) {
+                console.error('Submission failed:', error);
+                errorParagraph.textContent = 'An unexpected error occurred. Please try again.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+    });
   </script>
 </body>
 </html>

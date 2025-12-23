@@ -19,3 +19,5 @@ target/
 # Build files & logs
 build/
 dist/
+
+.env

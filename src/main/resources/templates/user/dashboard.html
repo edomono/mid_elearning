@@ -54,7 +54,6 @@
   <header th:fragment="header" class="bg-white border-b-4 border-green-400 flex justify-between items-center px-6 py-3 rounded-b-lg shadow-md">
     <div class="flex items-center space-x-3">
       <div th:insert="~{fragments/back-button :: backButton(defaultUrl='/user/dashboard')}"></div>
-      <img th:src="@{/static/images/header-logo.png}" alt="Intelsysdata logo" class="h-10" />
       <div>
         <h1 class="text-lg font-bold text-green-700">Intelsysdata</h1>
         <p class="text-xs text-gray-500 -mt-1">Business Intelligence Solution</p>
@@ -165,7 +164,8 @@
             </div>
           </div>
           <form th:action="@{/forum/send}" method="post" class="mt-3 flex gap-2">
-            <input name="message" required maxlength="500" placeholder="Write a message..." 
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <input id="forum-message" name="message" required maxlength="500" placeholder="Write a message..." autocomplete="off"
                    class="flex-1 border rounded-lg px-3 py-2 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 hover:border-blue-300" />
             <button type="submit" 
                     class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm transform transition-all duration-200 hover:scale-105 hover:bg-green-500 active:scale-95">
@@ -305,8 +305,8 @@
             notificationItem.className = `p-3 border-b hover:bg-gray-50 ${notification.read ? 'text-gray-500' : 'font-semibold text-gray-800'}`;
             notificationItem.setAttribute('data-notification-id', notification.id);
 
-            const senderInfo = notification.sender ? `<span class="text-xs text-blue-600">${notification.sender.username}</span> - ` : '';
-            const timestamp = new Date(notification.timestamp).toLocaleString();
+            const senderInfo = notification.senderUsername ? `<span class="text-xs text-blue-600">${notification.senderUsername}</span> - ` : '';
+            const timestamp = notification.timestamp ? new Date(notification.timestamp).toLocaleString() : '';
 
             notificationItem.innerHTML = `
                 <p class="text-sm">${senderInfo}${notification.message}</p>

@@ -1,0 +1,32 @@
+services:
+  springboot_db:
+    image: mysql:8.0
+    container_name: springboot_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: e_learning
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  springboot_app:
+    build: .
+    container_name: springboot_app
+    ports:
+      - "8080:8080"
+    depends_on:
+      springboot_db:
+        condition: service_healthy
+    environment:
+      SPRING_FLYWAY_ENABLED: "false"
+      DB_HOST: springboot_db
+      DB_PORT: 3306
+      DB_NAME: e_learning
+      DB_USER: root
+      DB_PASSWORD: root

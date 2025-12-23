@@ -9,11 +9,6 @@
 
         <!-- Modal Body -->
         <div class="p-6 overflow-y-auto">
-            <!-- Error alert -->
-            <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
-                <p th:text="${error}"></p>
-            </div>
-
             <!-- Form -->
             <form id="mentor-add-participant-form" th:action="@{/mentor/participant/add}" th:object="${participant}" method="post" class="space-y-6">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -65,3 +60,70 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const mentorAddModal = document.getElementById('mentor-add-participant-modal');
+    const mentorCloseBtn = document.getElementById('mentor-close-add-participant-modal-btn');
+    const mentorCancelBtn = document.getElementById('mentor-cancel-add-participant-btn');
+    const mentorAddForm = document.getElementById('mentor-add-participant-form');
+
+    if (mentorAddForm) {
+        mentorAddForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(mentorAddForm);
+            const action = mentorAddForm.getAttribute('action');
+
+            fetch(action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    // CSRF token is already included in formData
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message || 'An unknown error occurred.',
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'A network error occurred. Please try again.',
+                });
+            });
+        });
+    }
+
+    function hideMentorModal() {
+        if (mentorAddModal) {
+            mentorAddModal.classList.add('hidden');
+        }
+    }
+
+    if (mentorCloseBtn) {
+        mentorCloseBtn.addEventListener('click', hideMentorModal);
+    }
+    if (mentorCancelBtn) {
+        mentorCancelBtn.addEventListener('click', hideMentorModal);
+    }
+});
+</script>

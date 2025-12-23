@@ -67,11 +67,15 @@
 
 <body class="bg-[#0074cc] min-h-screen flex flex-col">
 
+  <!-- Success Toast -->
+  <div id="success-toast" class="hidden fixed top-5 right-5 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in z-50">
+    <p>Course added successfully!</p>
+  </div>
+
   <!-- ===== HEADER ===== -->
   <header class="bg-white border-b-4 border-green-400 flex justify-between items-center px-6 py-3 rounded-b-lg shadow-md">
     <div class="flex items-center space-x-3">
       <div th:insert="~{fragments/back-button :: backButton(defaultUrl='/admin/dashboard')}"></div>
-      <img th:src="@{/static/images/header-logo.png}" alt="Logo" class="h-10">
       <div>
         <h1 class="text-lg font-bold text-green-700">Intelsysdata</h1>
         <p class="text-xs text-gray-500 -mt-1">Business Intelligence Solution</p>
@@ -523,6 +527,65 @@
         }
       }
     }
+
+    function showToast(message) {
+      const toast = document.getElementById('success-toast');
+      if (toast) {
+          toast.querySelector('p').textContent = message;
+          toast.classList.remove('hidden');
+          setTimeout(() => {
+              toast.classList.add('hidden');
+          }, 3000); // Hide after 3 seconds
+      }
+    }
+
+    // === AJAX for Add Course Modal (Event Delegation) ===
+    document.addEventListener('submit', async (event) => {
+        if (event.target && event.target.id === 'add-course-form') {
+            event.preventDefault();
+
+            const addCourseForm = event.target;
+            // Removed errorDiv and successDiv as they are no longer used with Swal.fire
+
+            const formData = new FormData(addCourseForm);
+            const actionUrl = addCourseForm.getAttribute('action');
+
+            try {
+                const response = await fetch(actionUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message || 'Course added successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload(); // Reload to show the new course
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message || 'An unknown error occurred.',
+                    });
+                }
+            } catch (error) {
+                console.error('Submission failed:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'A network error occurred. Please try again.',
+                });
+            }
+        }
+    });
   </script>
 </body>
 </html>
